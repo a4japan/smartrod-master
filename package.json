@@ -1,0 +1,9 @@
+{
+  "name": "smart-rod-master",
+  "version": "4.4.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@netlify/blobs": "^8.1.0"
+  }
+}

@@ -1,0 +1,1985 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<!-- This site is hosted on Netlify. Anyone can build and deploy a site
+     like this one for free: https://netlify.new/?utm_campaign=loops&utm_source=ai-legible&utm_medium=owned&utm_content=comment&utm_id=be81e1f6-d12f-4db3-af2a-bcfc5a6e2282
+     Netlify hosting facts for this site: static/SSR served via Netlify Edge. -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Rod Master v4.4</title>
+<meta name="description" content="SMART ROD — free perm rod layout simulator. Upload a style photo and get a rod layout map. Japanese / English / 繁體中文 / 简体中文.">
+<style>
+:root {
+  --ink: #1a1a2e; --ink-soft: #5a5a6e; --ink-faint: #9a9aae;
+  --line: #e8e8f0; --line-soft: #f2f2f8; --bg: #fafafc; --card: #fff;
+  --brand: #252525; --brand-soft: #f5f5f5; --brand-gold: #FFB800;
+  --keep: #0f9e75; --keep-bg: #e3f6ef;
+  --simplify: #2575c4; --simplify-bg: #e7f1fb;
+  --remove: #d4537e; --remove-bg: #fbeaf0;
+  --warn: #b5740b; --warn-bg: #fbf0d9;
+  --r: 14px; --r-sm: 9px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN", "Yu Gothic", "PingFang TC", "Microsoft JhengHei", "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif; background: var(--bg); color: var(--ink); line-height: 1.7; -webkit-font-smoothing: antialiased; }
+.wrap { max-width: 960px; margin: 0 auto; padding: 0 20px 80px; }
+
+/* API banner */
+.api-banner { background: var(--warn-bg); border-bottom: 1px solid #f0d9a8; padding: 11px 20px; font-size: 13px; color: var(--warn); display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; }
+.api-banner.ok { background: var(--keep-bg); border-color: #b8e6d4; color: var(--keep); }
+.api-banner button { background: var(--card); border: 1px solid currentColor; color: inherit; padding: 4px 12px; border-radius: 7px; font-size: 12px; cursor: pointer; font-family: inherit; font-weight: 600; }
+
+header { padding: 28px 0 22px; border-bottom: 2px solid var(--brand); margin-bottom: 28px; }
+.logo-row { display: flex; align-items: center; gap: 13px; margin-bottom: 5px; }
+.logo-mark { width: 36px; height: 36px; border-radius: 0; background: var(--brand); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.logo-mark::after { content: "SR"; color: var(--brand-gold); font-size: 12px; font-weight: 900; letter-spacing: -0.03em; }
+h1 { font-size: 22px; font-weight: 800; letter-spacing: -0.02em; }
+.sub { font-size: 13px; color: var(--ink-soft); letter-spacing: 0.01em; }
+.badge { display: inline-block; background: var(--brand-gold); color: var(--brand); font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 4px; letter-spacing: 0.04em; margin-left: 8px; vertical-align: middle; }
+
+.tabs { display: flex; gap: 4px; margin-bottom: 28px; background: var(--line-soft); padding: 5px; border-radius: var(--r-sm); flex-wrap: wrap; }
+.tab { flex: 1; min-width: 120px; padding: 10px 10px; border: none; background: transparent; border-radius: 7px; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--ink-soft); transition: all .15s; font-family: inherit; display: flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap; }
+.tab.active { background: var(--brand); color: var(--brand-gold); box-shadow: 0 1px 4px rgba(0,0,0,.15); }
+.tab svg { width: 15px; height: 15px; flex-shrink: 0; }
+
+.panel { display: none; }
+.panel.active { display: block; animation: fade .2s ease; }
+@keyframes fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+.field-label { font-size: 13.5px; font-weight: 700; margin-bottom: 8px; display: block; }
+.hint { font-size: 12.5px; color: var(--ink-soft); margin-bottom: 14px; line-height: 1.65; }
+textarea, input[type=text], input[type=password] { width: 100%; padding: 13px 15px; border: 1px solid var(--line); border-radius: var(--r-sm); font-size: 14px; font-family: inherit; line-height: 1.7; background: var(--card); color: var(--ink); }
+textarea { min-height: 170px; resize: vertical; }
+textarea:focus, input:focus { outline: none; border-color: var(--brand); box-shadow: 0 0 0 3px #25252518; }
+textarea::placeholder, input::placeholder { color: #b8b8c8; }
+
+.sample-row { display: flex; gap: 8px; margin-top: 11px; flex-wrap: wrap; }
+.chip { font-size: 12.5px; padding: 6px 13px; border-radius: 20px; border: 1px solid var(--line); background: var(--card); cursor: pointer; color: var(--ink-soft); font-family: inherit; transition: all .15s; }
+.chip:hover { border-color: var(--brand); color: var(--brand); background: var(--brand-soft); }
+
+.btn-primary { margin-top: 16px; width: 100%; padding: 14px; border: none; border-radius: var(--r-sm); background: var(--brand); color: #fff; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; transition: all .15s; display: flex; align-items: center; justify-content: center; gap: 9px; }
+.btn-primary:hover { background: #333; }
+.btn-primary:disabled { opacity: .4; cursor: not-allowed; }
+.btn-gold { background: var(--brand-gold); color: var(--brand); }
+.btn-gold:hover { background: #e6a700; }
+
+.drop { border: 2px dashed var(--line); border-radius: var(--r); padding: 36px 20px; text-align: center; cursor: pointer; transition: all .2s; background: var(--card); }
+.drop:hover, .drop.over { border-color: var(--brand-gold); background: #fffbee; }
+.drop svg { width: 36px; height: 36px; color: var(--brand-gold); margin-bottom: 10px; }
+.drop-title { font-size: 14.5px; font-weight: 600; margin-bottom: 3px; }
+.drop-sub { font-size: 12.5px; color: var(--ink-soft); }
+.preview-wrap { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+.preview-img { max-height: 180px; border-radius: var(--r-sm); border: 1px solid var(--line); }
+
+.result { margin-top: 26px; }
+.loading { text-align: center; padding: 46px 20px; color: var(--ink-soft); }
+.spinner { width: 30px; height: 30px; border: 3px solid var(--line); border-top-color: var(--brand-gold); border-radius: 50%; animation: spin .8s linear infinite; margin: 0 auto 14px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.stats { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+.stat { flex: 1; min-width: 130px; background: var(--card); border: 1px solid var(--line); border-radius: var(--r); padding: 15px 17px; }
+.stat-label { font-size: 12px; color: var(--ink-soft); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.04em; }
+.stat-num { font-size: 26px; font-weight: 800; letter-spacing: -0.03em; }
+.stat-num .unit { font-size: 13px; font-weight: 500; color: var(--ink-soft); }
+.stat-foot { font-size: 12px; color: var(--ink-soft); margin-top: 2px; }
+.stat.keep .stat-num { color: var(--keep); }
+.stat.simplify .stat-num { color: var(--brand-gold); }
+.stat.accent { border-top: 3px solid var(--brand-gold); }
+
+.legend { display: flex; gap: 8px; margin-bottom: 15px; flex-wrap: wrap; }
+.lg { font-size: 12px; padding: 4px 11px; border-radius: 7px; display: inline-flex; align-items: center; gap: 5px; font-weight: 700; }
+.lg.keep { background: var(--keep-bg); color: var(--keep); }
+.lg.simplify { background: var(--simplify-bg); color: var(--simplify); }
+.lg.remove { background: var(--remove-bg); color: var(--remove); }
+.dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+
+.conv-card { background: var(--card); border: 1px solid var(--line); border-radius: var(--r); padding: 15px 17px; margin-bottom: 10px; border-left: 4px solid var(--line); }
+.conv-card.keep { border-left-color: var(--keep); }
+.conv-card.simplify { border-left-color: var(--simplify); }
+.conv-card.remove { border-left-color: var(--remove); }
+.conv-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 9px; gap: 10px; }
+.conv-step { font-size: 14.5px; font-weight: 700; }
+.conv-tag { font-size: 11px; padding: 3px 9px; border-radius: 6px; font-weight: 700; white-space: nowrap; }
+.conv-tag.keep { background: var(--keep-bg); color: var(--keep); }
+.conv-tag.simplify { background: var(--simplify-bg); color: var(--simplify); }
+.conv-tag.remove { background: var(--remove-bg); color: var(--remove); }
+.conv-body { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 600px) { .conv-body { grid-template-columns: 1fr; gap: 8px; } }
+.conv-col-label { font-size: 11px; color: var(--ink-soft); margin-bottom: 3px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+.conv-old { font-size: 13.5px; color: var(--ink-soft); }
+.conv-new { font-size: 13.5px; color: var(--ink); font-weight: 600; }
+
+.note-box { margin-top: 16px; padding: 14px 16px; border-radius: var(--r-sm); font-size: 13px; line-height: 1.65; display: flex; gap: 9px; align-items: flex-start; }
+.note-box.info { background: #fffbee; color: #7a5c00; border: 1px solid #f0d98a; }
+.note-box.warn { background: var(--warn-bg); color: var(--warn); }
+.note-box svg { width: 17px; height: 17px; flex-shrink: 0; margin-top: 1px; }
+
+/* Guide */
+.ladder { background: var(--card); border: 1px solid var(--line); border-radius: var(--r); padding: 20px; margin-bottom: 20px; }
+.ladder-title { font-size: 14px; font-weight: 800; margin-bottom: 16px; letter-spacing: -0.01em; }
+.rods { display: flex; gap: 6px; align-items: flex-end; justify-content: space-between; }
+.rod { flex: 1; text-align: center; }
+.rod-bar { margin: 0 auto 7px; border-radius: 4px; width: 60%; min-width: 30px; }
+.rod-name { font-size: 10px; font-weight: 700; }
+.rod-mm { font-size: 13px; font-weight: 800; }
+.rod-use { font-size: 9px; color: var(--ink-soft); line-height: 1.3; margin-top: 2px; }
+.ladder-axis { display: flex; justify-content: space-between; font-size: 11px; color: var(--ink-soft); margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--line-soft); }
+
+.parts { background: var(--card); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; margin-top: 16px; }
+.parts-head { padding: 14px 17px; font-size: 14px; font-weight: 700; border-bottom: 1px solid var(--line); background: var(--line-soft); }
+table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+td, th { padding: 11px 17px; text-align: left; }
+thead td { font-size: 11px; color: var(--ink-soft); font-weight: 700; background: var(--line-soft); text-transform: uppercase; letter-spacing: 0.04em; }
+tbody tr { border-top: 1px solid var(--line-soft); }
+tbody tr:hover { background: var(--brand-soft); }
+.sw { width: 11px; height: 11px; border-radius: 3px; display: inline-block; margin-right: 7px; vertical-align: middle; }
+.ta-r { text-align: right; }
+
+.len-table { background: var(--card); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; margin-bottom: 16px; }
+
+/* Chat */
+.chat-box { background: var(--card); border: 1px solid var(--line); border-radius: var(--r); height: 460px; display: flex; flex-direction: column; overflow: hidden; }
+.chat-msgs { flex: 1; overflow-y: auto; padding: 18px; display: flex; flex-direction: column; gap: 11px; }
+.chat-empty { text-align: center; color: var(--ink-faint); font-size: 13px; margin: auto 0; line-height: 2; }
+.msg { max-width: 82%; padding: 11px 15px; border-radius: 16px; font-size: 14px; line-height: 1.6; white-space: pre-wrap; }
+.msg.user { background: var(--brand); color: #fff; align-self: flex-end; border-bottom-right-radius: 4px; }
+.msg.ai { background: var(--line-soft); color: var(--ink); align-self: flex-start; border-bottom-left-radius: 4px; }
+.chat-input { border-top: 1px solid var(--line); padding: 12px; display: flex; gap: 8px; }
+.chat-input input { flex: 1; }
+.chat-send { width: 46px; border: none; border-radius: var(--r-sm); background: var(--brand-gold); color: var(--brand); cursor: pointer; font-size: 18px; flex-shrink: 0; font-weight: 800; }
+.chat-send:disabled { opacity: .4; }
+.chat-suggest { display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 14px; }
+
+/* Video */
+.vid-section { margin-bottom: 22px; }
+.vid-section h3 { font-size: 13px; font-weight: 800; margin-bottom: 11px; padding-bottom: 7px; border-bottom: 2px solid var(--brand-gold); text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-soft); }
+.vid-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 9px; }
+.vid-card { display: flex; align-items: center; gap: 10px; padding: 11px 13px; background: var(--card); border: 1px solid var(--line); border-radius: var(--r-sm); text-decoration: none; color: var(--ink); transition: all .15s; }
+.vid-card:hover { border-color: var(--brand-gold); background: #fffbee; }
+.vid-icon { width: 30px; height: 30px; border-radius: 7px; background: var(--remove-bg); color: var(--remove); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.vid-icon svg { width: 15px; height: 15px; }
+.vid-label { font-size: 12.5px; font-weight: 700; line-height: 1.35; }
+.vid-tag { font-size: 11px; color: var(--ink-soft); }
+
+.err { background: var(--remove-bg); color: var(--remove); padding: 14px 16px; border-radius: var(--r-sm); font-size: 13px; margin-top: 16px; }
+
+/* Modal */
+.modal-bg { position: fixed; inset: 0; background: rgba(20,20,40,.6); display: none; align-items: center; justify-content: center; padding: 20px; z-index: 100; }
+.modal-bg.show { display: flex; }
+.modal { background: var(--card); border-radius: var(--r); padding: 28px; max-width: 480px; width: 100%; }
+.modal h2 { font-size: 18px; font-weight: 800; margin-bottom: 8px; }
+.modal p { font-size: 13.5px; color: var(--ink-soft); margin-bottom: 16px; line-height: 1.7; }
+.modal a { color: var(--brand); }
+.modal-actions { display: flex; gap: 10px; margin-top: 16px; }
+.modal-actions button { flex: 1; padding: 12px; border-radius: var(--r-sm); font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; border: none; }
+.modal-save { background: var(--brand-gold); color: var(--brand); }
+.modal-cancel { background: var(--line-soft); color: var(--ink-soft); }
+
+/* ── SVG展開図 ── */
+.diagram-wrap { background: var(--card); border: 1px solid var(--line); border-radius: var(--r); padding: 20px; margin-top: 24px; }
+.diagram-title { font-size: 14px; font-weight: 800; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; }
+.diagram-title .copy-btn { font-size: 12px; padding: 5px 12px; border-radius: 6px; border: 1px solid var(--line); background: var(--card); cursor: pointer; font-family: inherit; font-weight: 600; color: var(--ink-soft); }
+.diagram-title .copy-btn:hover { border-color: var(--brand-gold); color: var(--brand); }
+#head-diagram { width: 100%; max-width: 480px; display: block; margin: 0 auto; }
+
+.rod-legend { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.rod-legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; }
+.rod-legend-swatch { width: 14px; height: 14px; border-radius: 3px; }
+
+.share-section { margin-top: 16px; }
+.share-text { background: var(--line-soft); border-radius: var(--r-sm); padding: 12px 14px; font-size: 12px; font-family: "Courier New", monospace; white-space: pre-wrap; color: var(--ink-soft); line-height: 1.7; max-height: 160px; overflow-y: auto; }
+
+/* ── ⑥ 巻きムービー ── */
+.mv-src-row { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:18px; }
+.mv-chip { font-size:12.5px; padding:7px 14px; border-radius:14px; border:1px solid var(--line); background:var(--card); cursor:pointer; color:var(--ink-soft); font-family:inherit; transition:all .15s; text-align:left; }
+.mv-chip:hover { border-color:var(--brand-gold); color:var(--brand); }
+.mv-chip.active { background:var(--brand); color:var(--brand-gold); border-color:var(--brand); font-weight:700; }
+.mv-chip:disabled { opacity:.35; cursor:not-allowed; }
+.mv-chip small { display:block; font-size:10px; opacity:.75; font-weight:400; }
+.mv-layout { display:grid; grid-template-columns:1fr 280px; gap:16px; align-items:start; }
+@media (max-width:760px){ .mv-layout { grid-template-columns:1fr; } }
+.mv-stage-card { background:var(--card); border:1px solid var(--line); border-radius:var(--r); padding:14px; }
+#mv-stage svg { width:100%; display:block; border-radius:var(--r-sm); background:#fdfcfa; }
+.mv-steps { display:flex; gap:5px; flex-wrap:wrap; margin-top:12px; }
+.mv-step { font-size:11px; padding:4px 9px; border-radius:6px; background:var(--line-soft); color:var(--ink-faint); font-weight:600; transition:all .15s; }
+.mv-step.on { background:var(--brand); color:var(--brand-gold); }
+.mv-caption { margin-top:10px; font-size:13.5px; font-weight:700; min-height:1.6em; }
+.mv-controls { display:flex; gap:8px; flex-wrap:wrap; margin-top:14px; align-items:center; }
+.mv-btn { padding:9px 16px; border:1px solid var(--line); border-radius:var(--r-sm); background:var(--card); font-size:13px; font-weight:700; cursor:pointer; font-family:inherit; color:var(--ink); transition:all .15s; }
+.mv-btn:hover { border-color:var(--brand); }
+.mv-btn.gold { background:var(--brand-gold); border-color:var(--brand-gold); color:var(--brand); min-width:96px; }
+.mv-btn.gold:hover { background:#e6a700; }
+.mv-controls select { padding:8px 10px; border:1px solid var(--line); border-radius:var(--r-sm); font-size:12.5px; font-family:inherit; background:var(--card); color:var(--ink); }
+.mv-progressbar { height:6px; background:var(--line-soft); border-radius:3px; margin-top:14px; overflow:hidden; }
+#mv-bar { height:100%; width:0%; background:var(--brand-gold); border-radius:3px; transition:width .15s linear; }
+.mv-progress-text { font-size:12px; color:var(--ink-soft); margin-top:6px; font-weight:600; }
+.mv-info { background:var(--card); border:1px solid var(--line); border-radius:var(--r); padding:14px 16px; margin-bottom:14px; }
+.mv-info-head { display:flex; gap:10px; align-items:center; margin-bottom:10px; }
+.mv-swatch { width:26px; height:26px; border-radius:7px; flex-shrink:0; }
+.mv-info-name { font-size:14px; font-weight:800; }
+.mv-info-zone { font-size:11.5px; color:var(--ink-soft); }
+.mv-info dl { display:flex; flex-direction:column; gap:6px; }
+.mv-info dl > div { display:flex; gap:8px; font-size:12.5px; }
+.mv-info dt { color:var(--ink-faint); width:52px; flex-shrink:0; font-weight:600; }
+.mv-info dd { color:var(--ink); font-weight:600; }
+.mv-map-card { background:var(--card); border:1px solid var(--line); border-radius:var(--r); padding:14px; }
+.mv-map-title { font-size:12.5px; font-weight:800; margin-bottom:8px; }
+.mv-map-legend { font-size:10.5px; color:var(--ink-faint); margin-top:8px; line-height:1.6; }
+#mv-map svg { width:100%; display:block; }
+.mv-rod { opacity:.16; cursor:pointer; transition:opacity .25s; }
+.mv-rod:hover { opacity:.55; }
+.mv-rod.done { opacity:1; }
+.mv-rod.cur { opacity:1; animation:mvBlink 1.1s ease-in-out infinite; }
+.mv-rod.cur rect { stroke:#FFB800 !important; stroke-width:2.6px !important; }
+.mv-rod .mv-num { opacity:0; transition:opacity .2s; }
+.mv-rod.done .mv-num, .mv-rod.cur .mv-num { opacity:1; }
+@keyframes mvBlink { 50% { opacity:.5; } }
+@media (prefers-reduced-motion: reduce){ .mv-rod.cur { animation:none; } }
+.mv-empty { border:2px dashed var(--line); border-radius:var(--r); padding:30px 20px; text-align:center; color:var(--ink-soft); font-size:13px; line-height:1.9; }
+.copy-btn.gold { background:var(--brand-gold); border-color:var(--brand-gold); color:var(--brand); font-weight:700; }
+.diagram-title .btn-row { display:flex; gap:8px; flex-wrap:wrap; }
+
+footer { margin-top: 46px; padding-top: 22px; border-top: 1px solid var(--line); font-size: 12px; color: var(--ink-faint); text-align: center; line-height: 1.9; }
+/* ═══ [v4.3] 補足情報セレクタ ═══ */
+.selwrap { display: flex; flex-direction: column; gap: 8px; background: var(--panel-soft, #faf8f4); border: 1px solid var(--line, #e6e0d6); border-radius: 12px; padding: 12px; }
+.selrow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.sel-cat { flex: 0 0 104px; font-size: 12px; font-weight: 700; color: var(--ink-soft); }
+.selbtns { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.selbtn { border: 1.5px solid var(--line, #d8d1c5); background: var(--panel, #fff); color: var(--ink); border-radius: 999px; padding: 6px 13px; font-size: 12.5px; font-weight: 600; cursor: pointer; transition: all .15s; }
+.selbtn.on { background: var(--ink, #1a1a2e); border-color: var(--ink, #1a1a2e); color: #FFB800; }
+.cmwrap { display: inline-flex; align-items: center; gap: 5px; font-size: 12.5px; font-weight: 700; color: var(--ink); }
+.cmwrap input { width: 64px; padding: 6px 8px; border: 1.5px solid var(--line, #d8d1c5); border-radius: 8px; font-size: 13px; background: var(--panel, #fff); color: var(--ink); }
+/* ═══ [v4.3] 従来ロッド変換表 ═══ */
+.conv-eq { display: inline-flex; align-items: center; gap: 8px; font-weight: 700; }
+.conv-eq .sw2 { width: 13px; height: 25px; border-radius: 5px; display: inline-block; flex-shrink: 0; }
+/* ═══ [v4.3] テストカール基準写真 ═══ */
+.tc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 10px; margin-top: 12px; }
+.tc-cell { text-align: center; }
+.tc-ph { height: 96px; border: 2px dashed var(--line, #d8d1c5); border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; color: var(--ink-soft); gap: 5px; background: var(--panel, #fff); }
+.tc-cell img { width: 100%; height: 96px; object-fit: cover; border-radius: 10px; display: none; border: 1px solid var(--line, #e6e0d6); }
+.tc-cell.hasimg img { display: block; }
+.tc-cell.hasimg .tc-ph { display: none; }
+.tc-cap { font-size: 11px; font-weight: 700; margin-top: 5px; color: var(--ink); }
+/* ═══ [v4.3] アドバンス解説 ═══ */
+.adv-box { margin-top: 18px; border: 1px solid var(--line, #e6e0d6); border-radius: 12px; background: var(--panel-soft, #faf8f4); overflow: hidden; }
+.adv-head { padding: 13px 16px; font-weight: 800; font-size: 13.5px; color: var(--ink); cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 10px; user-select: none; }
+.adv-head .chev { transition: transform .2s; font-size: 11px; color: var(--ink-soft); }
+.adv-box.open .chev { transform: rotate(180deg); }
+.adv-body { display: none; padding: 0 16px 14px; font-size: 12.5px; line-height: 1.75; color: var(--ink-soft); }
+.adv-box.open .adv-body { display: block; }
+.adv-item { padding: 11px 0; border-top: 1px dashed var(--line, #e0d9cd); }
+.adv-item b.wn { color: var(--ink); font-size: 13px; }
+.adv-tip { margin-top: 5px; color: #7a5c00; background: #fffbee; border: 1px solid #f0d98a; border-radius: 8px; padding: 7px 10px; font-size: 12px; }
+
+/* [v4.4] language switch / public edition */
+.lang-switch { display:flex; gap:6px; justify-content:flex-end; flex-wrap:wrap; padding:14px 0 0; }
+.lang-switch button { border:1px solid var(--line); background:var(--card); color:var(--ink-soft); padding:5px 12px; border-radius:999px; font-size:12px; font-weight:700; cursor:pointer; font-family:inherit; }
+.lang-switch button.on { background:var(--brand); color:var(--brand-gold); border-color:var(--brand); }
+.sr-n { font-style:normal; }
+.foot-contact { margin-top:10px; font-size:12.5px; }
+.foot-contact a { color:var(--brand); font-weight:700; }
+</style>
+</head>
+<body>
+
+<div class="api-banner ok" id="api-banner">
+  <span id="api-banner-text">🆓 無料でご利用いただけます。AI機能は1日の利用回数に上限があります。</span>
+</div>
+
+<div class="wrap">
+  <div class="lang-switch" id="lang-switch" data-noi18n>
+    <button type="button" data-lang="ja">日本語</button>
+    <button type="button" data-lang="en">English</button>
+    <button type="button" data-lang="zh-TW">繁體中文</button>
+    <button type="button" data-lang="zh-CN">简体中文</button>
+  </div>
+  <header>
+    <div class="logo-row">
+      <div class="logo-mark"></div>
+      <h1>Smart Rod Master<span class="badge">v4.4</span></h1>
+    </div>
+    <p class="sub">スマートロッド導入支援 — カリキュラム変換・展開図・巻きムービー・スタッフ教育</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="convert">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h16M4 17h10"/></svg>カリキュラム変換
+    </button>
+    <button class="tab" data-tab="style">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a7 7 0 00-7 7c0 3 2 5 2 8h10c0-3 2-5 2-8a7 7 0 00-7-7z"/></svg>スタイル→展開図
+    </button>
+    <button class="tab" data-tab="movie">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M10 8.5l5 3.5-5 3.5z"/></svg>巻きムービー
+    </button>
+    <button class="tab" data-tab="guide">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg>サイズ早見表
+    </button>
+    <button class="tab" data-tab="chat">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a8 8 0 01-8 8H7l-4 3V12a8 8 0 018-8h2a8 8 0 018 8z"/></svg>AIに質問
+    </button>
+    <button class="tab" data-tab="videos">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M10 9l5 3-5 3z"/></svg>動画
+    </button>
+  </div>
+
+  <!-- ① カリキュラム変換 -->
+  <section class="panel active" id="panel-convert">
+    <label class="field-label">従来のカリキュラム手順を貼り付け</label>
+    <p class="hint">既存のパーマ教育マニュアルや手順書をそのまま貼り付けてください。各工程をスマートロッド版へ変換します。</p>
+    <textarea id="curriculum-input" maxlength="6000" placeholder="例：&#10;1. ペーパーを被せてスプレイヤーでしっかり濡らす&#10;2. 人差し指でペーパーと髪の毛をロッドに巻き付ける&#10;3. ゴムは通常の掛け方。外れやすいところはあや掛け&#10;..."></textarea>
+    <button class="btn-primary" id="convert-btn">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 12h16M14 6l6 6-6 6"/></svg>
+      スマートロッド版に変換
+    </button>
+    <div class="result" id="convert-result"></div>
+  </section>
+
+  <!-- ② スタイル→展開図 -->
+  <section class="panel" id="panel-style">
+    <label class="field-label">完成スタイルの写真をアップロード</label>
+    <p class="hint">なりたい完成スタイルの写真（SNS保存画像・動画フレームなど）をアップすると、スマートロッドの推定配置・サイズ・巻き方を提案します。複数枚（横・後ろ等）あると精度が上がります。</p>
+    <div class="drop" id="drop">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M5 16v3a2 2 0 002 2h10a2 2 0 002-2v-3"/></svg>
+      <div class="drop-title">完成スタイル写真をドラッグ、またはクリック</div>
+      <div class="drop-sub">JPG / PNG・複数選択可</div>
+    </div>
+    <input type="file" id="file-input" accept="image/*" multiple style="display:none">
+    <div class="preview-wrap" id="preview-wrap"></div>
+    <div style="margin-top:14px">
+      <label class="field-label">補足情報（任意・タップで選択）</label>
+      <div class="selwrap" id="style-sel">
+        <div class="selrow"><span class="sel-cat">性別スタイル</span><div class="selbtns" data-key="gender"><button type="button" class="selbtn" data-v="メンズ">メンズ</button><button type="button" class="selbtn" data-v="レディース">レディース</button></div></div>
+        <div class="selrow"><span class="sel-cat">レングス</span><div class="selbtns" data-key="length"><button type="button" class="selbtn" data-v="ベリーショート">ベリーショート</button><button type="button" class="selbtn" data-v="ショート">ショート</button><button type="button" class="selbtn" data-v="ミディアム">ミディアム</button><button type="button" class="selbtn" data-v="セミロング">セミロング</button><button type="button" class="selbtn" data-v="ロング">ロング</button></div></div>
+        <div class="selrow"><span class="sel-cat">髪の状態</span><div class="selbtns" data-key="condition"><button type="button" class="selbtn" data-v="バージン毛">バージン</button><button type="button" class="selbtn" data-v="ダメージ毛（パーマ・カラー・縮毛の履歴あり）">ダメージ（パーマ・カラー・縮毛）</button><button type="button" class="selbtn" data-v="ハイダメージ・ブリーチ毛">ハイダメージ・ブリーチ</button></div></div>
+        <div class="selrow"><span class="sel-cat">ウェーブの質感</span><div class="selbtns" data-key="wave"><button type="button" class="selbtn" data-v="ゆるく">ゆるく</button><button type="button" class="selbtn" data-v="強め">強め</button></div></div>
+        <div class="selrow"><span class="sel-cat">かかり始め</span><div class="selbtns" data-key="start"><button type="button" class="selbtn" data-v="根本">根本</button><button type="button" class="selbtn" data-v="cm">根本から◯cm</button><span class="cmwrap" id="cm-wrap" style="display:none"><input type="number" id="start-cm" min="1" max="30" placeholder="5">cm</span></div></div>
+        <div class="selrow"><span class="sel-cat">前髪</span><div class="selbtns" data-key="bangs"><button type="button" class="selbtn" data-v="緩め">緩め</button><button type="button" class="selbtn" data-v="強め">強め</button></div></div>
+      </div>
+      <div class="note-box warn" id="bleach-warn" style="display:none">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg>
+        <span><b>ブリーチ毛・ハイダメージ毛へのパーマは基本的に推奨しません。</b>状態により結果の差が大きいため、施術の可否は毛髪診断のうえ、美容師とお客様のご相談・ご判断でお願いします（行う場合はテストカールを短めに・慎重に）。</span>
+      </div>
+      <label class="field-label" style="margin-top:12px">その他メモ（任意）</label>
+      <input type="text" id="style-note" maxlength="200" placeholder="例：外国人風の動き／顔まわりは流したい 等">
+    </div>
+    <button class="btn-primary btn-gold" id="analyze-btn" style="display:none">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
+      展開図を生成（頭部マップ付き）
+    </button>
+    <div class="result" id="style-result"></div>
+    <!-- [v4.3] アドバンス（応用）巻き方解説 -->
+    <div class="adv-box" id="adv-box">
+      <div class="adv-head" onclick="this.parentNode.classList.toggle('open')">アドバンス（応用）巻き方の解説 ─ 波巻き・リバース・ツイストスパイラル<span class="chev">▼</span></div>
+      <div class="adv-body">
+        <p style="margin:2px 0 6px">再現ハードルが高いため、これらは<b>AIの自動提案には含まれません</b>。自動生成された展開図の一部を、下記を参考にご自身で置き換えてアレンジしてください。</p>
+        <div class="adv-item"><b class="wn">波巻き</b> ─ ロッドを上下交互に配置し、髪をS字に通して柔らかく揺れるウェーブを作る巻き方。フェミニン・韓国系スタイル向き。
+          <div class="adv-tip">アレンジ例：バック上〜中間の2〜4本だけ波巻きに置き換えると表面に柔らかい揺れが出ます。スライスは薄めに、リッジの高さを揃えるのがコツ。</div></div>
+        <div class="adv-item"><b class="wn">リバース（逆巻き）</b> ─ 顔から遠ざかる方向へ回転させる巻き方。フォワード（顔向き）と交互に混ぜると、外国人風の立体的な動きになる。
+          <div class="adv-tip">アレンジ例：顔まわり・サイドをフォワード⇄リバース交互に。左右の耳側で回転方向が逆になる点に注意。カバーの向きも回転方向に合わせて。</div></div>
+        <div class="adv-item"><b class="wn">ツイストスパイラル（ねじり巻き）</b> ─ 毛束をねじってから斜めに巻き、エアリーな束感・質感を出す。カジュアル・外国人風・動き重視。
+          <div class="adv-tip">アレンジ例：トップ〜バック上の数本のみ置き換え。ねじりの回数で質感が大きく変わるため、1本テストカールで確認してから全体へ。</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ⑥ 巻きムービー -->
+  <section class="panel" id="panel-movie">
+    <label class="field-label">巻き工程ムービー（線図シミュレーション）</label>
+    <p class="hint">「スタイル→展開図」で生成した配置、または下のプリセットを選ぶと、1本ずつの巻き工程（角度 → 毛先処理 → 挿入 → ロック → 巻き込み → ゴム固定）と、全頭の巻き順（トップ→下の段→耳周り→ネープ）をアニメーションで再生します。スタッフ教育・施術前の共有にご利用ください。</p>
+    <div class="mv-src-row" id="mv-src-row"></div>
+
+    <div id="mv-body" style="display:none">
+      <div class="mv-layout">
+        <div>
+          <div class="mv-stage-card">
+            <div id="mv-stage"></div>
+            <div class="mv-steps" id="mv-steps"></div>
+            <div class="mv-caption" id="mv-caption"></div>
+          </div>
+          <div class="mv-controls">
+            <button class="mv-btn gold" id="mv-play">▶ 再生</button>
+            <button class="mv-btn" id="mv-prev">⏮ 前</button>
+            <button class="mv-btn" id="mv-next">⏭ 次</button>
+            <select id="mv-speed" title="再生速度">
+              <option value="0.5">0.5×</option>
+              <option value="1" selected>1×</option>
+              <option value="2">2×</option>
+              <option value="4">4×</option>
+            </select>
+            <select id="mv-order" title="巻き順">
+              <option value="std" selected>巻き順: トップ→ネープ</option>
+              <option value="rev">巻き順: ネープ→トップ</option>
+            </select>
+            <select id="mv-tip" title="毛先の処理">
+              <option value="normal" selected>毛先: 毛先から巻く</option>
+              <option value="out">毛先: 外す（逃がす）</option>
+            </select>
+          </div>
+          <div class="mv-progressbar"><div id="mv-bar"></div></div>
+          <div class="mv-progress-text" id="mv-progress"></div>
+        </div>
+        <div>
+          <div class="mv-info" id="mv-info"></div>
+          <div class="mv-map-card">
+            <div class="mv-map-title">巻き順マップ（クリックでジャンプ）</div>
+            <div id="mv-map"></div>
+            <div class="mv-map-legend">薄い = これから ／ 濃い = 巻き済み ／ 金枠 = いま巻いている1本</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mv-empty" id="mv-empty">
+      まだ配置データがありません。<br>
+      上のプリセットを選ぶか、「スタイル→展開図」タブで写真から配置を生成すると、<br>ここで巻き順ムービーを再生できます。
+    </div>
+  </section>
+
+  <!-- ③ サイズ早見表 -->
+  <section class="panel" id="panel-guide">
+    <div class="ladder">
+      <div class="ladder-title">スマートロッド サイズ・カラー早見表</div>
+      <div class="rods" id="rod-ladder"></div>
+      <div class="ladder-axis"><span>← 細い・カール強い</span><span>太い・自然な動き →</span></div>
+    </div>
+    <div class="len-table">
+      <div class="parts-head">髪の長さ × 推奨サイズ × スタイル</div>
+      <table>
+        <thead><tr><td>長さ</td><td>推奨サイズ</td><td>スタイル例</td></tr></thead>
+        <tbody id="length-table"></tbody>
+      </table>
+    </div>
+    <div class="note-box info">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg>
+      <span>サイズの考え方は従来ロッドと完全に同じ。今までと同じ基準でロッドを選べます。</span>
+    </div>
+    <div class="parts">
+      <div class="parts-head">5つの巻き方とおすすめスタイル</div>
+      <table>
+        <thead><tr><td>巻き方</td><td>カール</td><td>おすすめ</td></tr></thead>
+        <tbody id="winding-table"></tbody>
+      </table>
+    </div>
+    <!-- [v4.3] 従来ロッド変換表 -->
+    <div class="len-table" style="margin-top:18px">
+      <div class="parts-head">従来ロッド → スマートロッド 変換表</div>
+      <table>
+        <thead><tr><td>従来のロッド</td><td>スマートロッド</td><td>カール感</td></tr></thead>
+        <tbody id="conv-table"></tbody>
+      </table>
+    </div>
+    <!-- [v4.3] スタイル別サイズルール -->
+    <div class="len-table" style="margin-top:18px">
+      <div class="parts-head">スタイル・部位別 推奨サイズ</div>
+      <table>
+        <thead><tr><td>スタイル / 部位</td><td>推奨サイズ</td><td>ポイント</td></tr></thead>
+        <tbody id="style-size-table"></tbody>
+      </table>
+    </div>
+    <!-- [v4.3] 外し方・テストカール -->
+    <div class="parts" style="margin-top:18px">
+      <div class="parts-head">ロッドオフ（外し方）と テストカールの基準</div>
+      <div style="padding:14px 16px;font-size:13px;line-height:1.9;color:var(--ink-soft)">
+        <b style="color:var(--ink)">外す順番：</b>ネープ（襟足）から上に向かって順に外す。上から外すと、外した毛が下のロッドに絡みテンションが乱れるため。<br>
+        <b style="color:var(--ink)">テストカールの放置時間：</b><br>
+        ・傷んでいないバージン毛 …… <b style="color:var(--ink)">10分</b><br>
+        ・カラー / パーマ / 縮毛矯正の履歴あり（ブリーチは除く）…… <b style="color:var(--ink)">5分</b><br>
+        ・ハイダメージ・ブリーチ毛 …… <b style="color:#d4537e">基本的に推奨しません。</b>施術の可否は毛髪診断のうえ、美容師とお客様のご相談・ご判断で。
+      </div>
+    </div>
+    <div class="parts" style="margin-top:18px">
+      <div class="parts-head">テストカールの基準写真（サイズ別ウェーブ見本）</div>
+      <div style="padding:12px 16px 16px">
+        <p style="font-size:12px;color:var(--ink-soft);margin:0 0 4px">スマートロッド各サイズで巻いたときのウェーブの出方の見本。テストカール判定の参考にしてください。</p>
+        <div class="tc-grid" id="tc-grid"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ④ AIチャット -->
+  <section class="panel" id="panel-chat">
+    <div class="chat-suggest" id="chat-suggest"></div>
+    <div class="chat-box">
+      <div class="chat-msgs" id="chat-msgs">
+        <div class="chat-empty" id="chat-empty">スマートロッドの使い方・巻き方・サイズ選び・トラブル対処<br>なんでも質問してください。<br><br>「逆巻きのコツは？」「短い髪が巻けない」「外国人風にするには？」</div>
+      </div>
+      <div class="chat-input">
+        <input type="text" id="chat-text" maxlength="300" placeholder="質問を入力…">
+        <button class="chat-send" id="chat-send">↑</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ⑤ 動画 -->
+  <section class="panel" id="panel-videos">
+    <p class="hint">スマートロッド公式解説動画。学習・確認用にご活用ください。</p>
+    <div id="video-library"></div>
+  </section>
+
+  <footer>
+    Smart Rod Master v4.4<br>
+    工程変換・サイズ推定・展開図はAIによる提案です。最終的な仕上がりは髪質・薬剤・施術者の判断により異なります。<br>
+    アップロードした写真は解析のためにAIサービス（Anthropic社）へ送信され、当サイトのサーバーには保存されません。お客様の顔が写った写真は、ご本人の同意を得たうえでご利用ください。
+    <div class="foot-contact"><b>ご購入・お問い合わせ</b> ／ <a href="https://smartrod.base.shop/" target="_blank" rel="noopener">smartrod.base.shop</a> ／ <a href="mailto:info@a4tokyo.com">info@a4tokyo.com</a></div>
+  </footer>
+</div>
+
+<script>
+// ═══════════════════════════════
+// ナレッジベース
+// ═══════════════════════════════
+const ROD_LINEUP = [
+  { name:"ブルー",    mm:11, hex:"#7FA8D4", base:"無地", curl:"強カール",   h:60 },
+  { name:"オレンジ",  mm:14, hex:"#EFA14E", base:"無地", curl:"自然な動き", h:75 },
+  { name:"ピンク",    mm:16, hex:"#E89BBE", base:"無地", curl:"自然な動き", h:88 },
+  { name:"B+ブルー",  mm:18, hex:"#378ADD", base:"黒",   curl:"ゆるめ",     h:100 },
+  { name:"B+グリーン",mm:20, hex:"#639922", base:"黒",   curl:"大ウェーブ", h:112 },
+  { name:"B+オレンジ",mm:22, hex:"#D86A30", base:"黒",   curl:"大ウェーブ", h:124 },
+  { name:"B+ピンク",  mm:24, hex:"#D4537E", base:"黒",   curl:"ボリューム", h:136 },
+];
+
+const LENGTH_MAP = [
+  ["ベリーショート (3〜6cm)",  "11・14mm 中心",  "メリハリ・フェード・ピンパーマ風"],
+  ["ショート (7〜10cm)",       "11・14・16mm",   "マッシュ・毛流れ・シャドウパーマ"],
+  ["ミディアム (11〜15cm)",    "14・16・18mm",   "センターパート・スパイラル"],
+  ["ロング (16cm以上)",        "16・18・20mm",   "ウルフ・ミディアムウルフ・強めスパイラル"],
+  ["ボブ・首が見える",         "襟足 11〜14mm ／ 襟足より上 16mm以上", "上部に11mm等は強く出過ぎるためNG"],
+  ["ボブ・首が隠れる",         "襟足 14mm以上 ／ 襟足より上 16mm以上", "大きめの収まりウェーブ"],
+  ["ミディアム女性 (鎖骨〜肩下)","14〜20mm",    "ウェーブの大きさをサイズで調整"],
+  ["セミロング女性 (肩下〜胸上)","14〜20mm",   "中間〜毛先の大きめウェーブ"],
+  ["ロング女性 (胸下)",        "14〜20mm",      "ゆるウェーブ〜動きのある大カール"],
+];
+
+/* [v4.3] 従来ロッド → スマートロッド 対応表 */
+const CONV_MAP = [
+  ["10・11mm", 11], ["12・13mm", 14], ["15mm", 16], ["17mm", 18],
+  ["20mm", 20], ["23mm", 22], ["26mm", 24],
+];
+
+/* [v4.3] スタイル・部位別サイズルール */
+const STYLE_SIZE_MAP = [
+  ["ニュアンスパーマ", "20mm以上（20・22・24）", "細めではなく大きめのウェーブで質感を作る"],
+  ["フェザーパーマ（はねる）", "18mm以上（18・20・22・24）", "毛先の外ハネを大きく柔らかく"],
+  ["ボブ（首が見える）", "襟足 11〜14mm", "襟足より上は必ず16mm以上"],
+  ["ボブ（首が隠れる）", "襟足 14mm以上", "襟足より上は必ず16mm以上"],
+  ["前髪（メンズ・5cm以下）", "11mm", "短い前髪はブルーで動きを"],
+  ["前髪（メンズ・5cm超）", "14・16mm", "自然な立ち上がりと毛流れ"],
+  ["前髪（レディース）", "18mm〜", "ふんわり大きく。細いロッドは強く出過ぎる"],
+];
+
+const WINDING_MAP = [
+  ["ヒラ巻き",        "ふんわりゆるカール",  "ナチュラル・フェミニン・抜け感"],
+  ["スパイラル巻き",  "しっかり弾むカール",  "華やか・ゴージャス・パーティー"],
+  ["ツイシー巻き",    "内+外ミックスカール", "トレンド・抜け感・こなれ感"],
+  ["ツイストスパイラル","ねじりエアリー",    "カジュアル・外国人風・動き重視"],
+  ["波巻き",          "柔らか揺れウェーブ",  "フェミニン・ロマンティック・デート"],
+];
+
+const VIDEO_LIBRARY = {
+  "基本の巻き方": [
+    { label:"上巻き（基本）",    tag:"ヒラ巻き・カバー上",  url:"https://www.youtube.com/watch?v=t_rMFLIZGM0" },
+    { label:"下巻き（基本）",    tag:"ヒラ巻き・カバー下",  url:"https://youtu.be/uI_NYD7-oqs" },
+    { label:"逆巻き",            tag:"カバー下",             url:"https://www.youtube.com/watch?v=LeIk8GFkR8o" },
+    { label:"ゴムかけのポイント",tag:"シリコンゴム固定",     url:"https://www.youtube.com/shorts/m2tL-g6uCg8" },
+  ],
+  "応用の巻き方": [
+    { label:"中間巻き",          tag:"毛先の長さ違い対応",   url:"https://www.youtube.com/watch?v=EEwAW56zWOA" },
+    { label:"ツイスト巻き",      tag:"ツイストスパイラル",   url:"https://www.youtube.com/watch?v=Iq2ClhpmLbE" },
+    { label:"波巻きパーマ",      tag:"波巻き",               url:"https://www.youtube.com/watch?v=yyQohddBBgU" },
+    { label:"短い髪の巻き方",    tag:"カバーでキャッチ",     url:"https://www.youtube.com/watch?v=PKE_z8LgeIk" },
+  ],
+  "解説・総合": [
+    { label:"総合解説 1",        tag:"全体の流れ",            url:"https://www.youtube.com/watch?v=2dyD2O8N15E" },
+    { label:"総合解説 2",        tag:"実演",                  url:"https://www.youtube.com/watch?v=LU5HgFIGoTI" },
+    { label:"公式チャンネル",    tag:"全動画",                url:"https://www.youtube.com/@smart-rod" },
+  ],
+};
+
+
+
+
+const CHAT_SUGGESTIONS = ["逆巻きのコツは？","短い髪が巻けない","外国人風にするには？","上巻きと逆巻きの違い","ゴム跡が気になる","ゆるいカールにしたい"];
+
+// ═══════════════════════════════
+// [v4.4] 多言語（i18n）— 日本語のテキストをキーにして翻訳する方式
+//   HTMLやJSが出力する日本語を、表示時にそのまま翻訳辞書で置き換える。
+//   AIが生成した文章（すでに選択言語）は辞書に一致しないため触らない。
+// ═══════════════════════════════
+const I18N_DICT = {"en": {"🆓 無料でご利用いただけます。AI機能は1日の利用回数に上限があります。": "🆓 Free to use. AI features have a daily usage limit.", "スマートロッド導入支援 — カリキュラム変換・展開図・巻きムービー・スタッフ教育": "SMART ROD adoption support — curriculum conversion, rod layout maps, winding animation, staff training", "カリキュラム変換": "Converter", "スタイル→展開図": "Style → Layout", "巻きムービー": "Winding Animation", "サイズ早見表": "Size Guide", "AIに質問": "Ask AI", "動画": "Videos", "従来のカリキュラム手順を貼り付け": "Paste your current curriculum steps", "既存のパーマ教育マニュアルや手順書をそのまま貼り付けてください。各工程をスマートロッド版へ変換します。": "Paste your existing perm training manual or step list as is. Each step will be converted to the SMART ROD version.", "スマートロッド版に変換": "Convert to SMART ROD version", "例：\n1. ペーパーを被せてスプレイヤーでしっかり濡らす\n2. 人差し指でペーパーと髪の毛をロッドに巻き付ける\n3. ゴムは通常の掛け方。外れやすいところはあや掛け\n...": "e.g.\n1. Place end paper and wet thoroughly with a sprayer\n2. Wrap the paper and hair around the rod with your index finger\n3. Fix with rubber bands; use a cross-band where it slips\n...", "完成スタイルの写真をアップロード": "Upload a photo of the finished style", "なりたい完成スタイルの写真（SNS保存画像・動画フレームなど）をアップすると、スマートロッドの推定配置・サイズ・巻き方を提案します。複数枚（横・後ろ等）あると精度が上がります。": "Upload a photo of the target style (a saved social media image, a video frame, etc.) and the AI suggests the SMART ROD placement, sizes and winding methods. Several photos (side, back, etc.) improve accuracy.", "完成スタイル写真をドラッグ、またはクリック": "Drag a photo here, or click to select", "JPG / PNG・複数選択可": "JPG / PNG · multiple files OK", "補足情報（任意・タップで選択）": "Extra details (optional · tap to select)", "性別スタイル": "Style type", "メンズ": "Men's", "レディース": "Women's", "レングス": "Length", "ベリーショート": "Very short", "ショート": "Short", "ミディアム": "Medium", "セミロング": "Semi-long", "ロング": "Long", "髪の状態": "Hair condition", "バージン": "Virgin hair", "ダメージ（パーマ・カラー・縮毛）": "Treated (perm / color / straightening)", "ハイダメージ・ブリーチ": "High damage / bleached", "ウェーブの質感": "Wave texture", "ゆるく": "Soft", "強め": "Strong", "かかり始め": "Where the curl starts", "根本": "From the root", "根本から◯cm": "From ◯ cm above the root", "前髪": "Bangs", "緩め": "Soft", "ブリーチ毛・ハイダメージ毛へのパーマは基本的に推奨しません。": "Perming bleached or highly damaged hair is generally not recommended. ", "状態により結果の差が大きいため、施術の可否は毛髪診断のうえ、美容師とお客様のご相談・ご判断でお願いします（行う場合はテストカールを短めに・慎重に）。": "Results vary greatly with hair condition, so whether to proceed should be decided after a hair diagnosis, through consultation between the stylist and the client (if you do proceed, use a shorter, careful test curl).", "その他メモ（任意）": "Other notes (optional)", "例：外国人風の動き／顔まわりは流したい 等": "e.g. Western-style movement / want the face-framing hair swept back", "展開図を生成（頭部マップ付き）": "Generate layout map (with head map)", "アドバンス（応用）巻き方の解説 ─ 波巻き・リバース・ツイストスパイラル": "Advanced winding techniques — wave wind, reverse, twist spiral", "再現ハードルが高いため、これらは": "Because these are harder to reproduce, ", "AIの自動提案には含まれません": "they are not included in the AI's automatic suggestions", "。自動生成された展開図の一部を、下記を参考にご自身で置き換えてアレンジしてください。": ". Use the notes below to replace parts of the generated layout yourself.", "波巻き": "Wave wind", "─ ロッドを上下交互に配置し、髪をS字に通して柔らかく揺れるウェーブを作る巻き方。フェミニン・韓国系スタイル向き。": "— Rods are placed alternately up and down and the hair is passed through in an S-shape to create soft, swaying waves. Suited to feminine and Korean-style looks.", "アレンジ例：バック上〜中間の2〜4本だけ波巻きに置き換えると表面に柔らかい揺れが出ます。スライスは薄めに、リッジの高さを揃えるのがコツ。": "Example: replacing just 2–4 rods in the upper-to-middle back with wave winding adds soft movement to the surface. Keep the sections thin and match the ridge height.", "リバース（逆巻き）": "Reverse wind", "─ 顔から遠ざかる方向へ回転させる巻き方。フォワード（顔向き）と交互に混ぜると、外国人風の立体的な動きになる。": "— Winding that rotates away from the face. Mixing it alternately with forward (toward the face) winding gives a three-dimensional, Western-style movement.", "アレンジ例：顔まわり・サイドをフォワード⇄リバース交互に。左右の耳側で回転方向が逆になる点に注意。カバーの向きも回転方向に合わせて。": "Example: alternate forward and reverse around the face and sides. Note that the rotation direction is opposite on the left and right ears, and set the cover direction to match the rotation.", "ツイストスパイラル（ねじり巻き）": "Twist spiral (twisted winding)", "─ 毛束をねじってから斜めに巻き、エアリーな束感・質感を出す。カジュアル・外国人風・動き重視。": "— Twist the strand, then wind it diagonally for an airy, piecey texture. Casual, Western-style, movement-focused.", "アレンジ例：トップ〜バック上の数本のみ置き換え。ねじりの回数で質感が大きく変わるため、1本テストカールで確認してから全体へ。": "Example: replace only a few rods from the top to the upper back. The number of twists changes the texture a lot, so check with one test curl before doing the whole head.", "巻き工程ムービー（線図シミュレーション）": "Winding process animation (line-drawing simulation)", "「スタイル→展開図」で生成した配置、または下のプリセットを選ぶと、1本ずつの巻き工程（角度 → 毛先処理 → 挿入 → ロック → 巻き込み → ゴム固定）と、全頭の巻き順（トップ→下の段→耳周り→ネープ）をアニメーションで再生します。スタッフ教育・施術前の共有にご利用ください。": "Pick the layout generated in “Style → Layout” or a preset below to play, as an animation, each rod's winding steps (angle → tip handling → insert → lock → wind in → band) and the winding order for the whole head (top → lower rows → around the ears → nape). Use it for staff training and for sharing before a service.", "📷 最新の展開図": "📷 Latest layout", "②で生成すると選べます": "Available after generating in ②", "生成済み": "Generated", "最新の展開図": "Latest layout", "ワンカールボブ": "One-curl bob", "横巻き・段構成の基本形": "Horizontal winding, basic tiered layout", "ゆるウェーブボブ": "Soft-wave bob", "サイズミックスの柔らか波": "Soft waves from mixed sizes", "メンズカールマッシュ": "Men's curly mash", "毛流れに沿う前方向配置": "Forward placement following the hair flow", "メンズ強めパーマ": "Men's strong perm", "11mm主体のしっかりカール": "Firm curls mainly with 11 mm", "ニュアンスパーマ（大きめ）": "Nuance perm (large)", "20mm以上で作る質感": "Texture made with 20 mm and up", "フェザーパーマ（外ハネ）": "Feather perm (flick-out)", "18mm以上・毛先ワンカール": "18 mm and up, one curl at the ends", "1.角度": "1. Angle", "2.毛先": "2. Tips", "3.挿入": "3. Insert", "4.ロック": "4. Lock", "5.巻き込み": "5. Wind in", "6.根元": "6. Root", "7.ゴム": "7. Band", "▶ 再生": "▶ Play", "⏸ 一時停止": "⏸ Pause", "▶ もう一度": "▶ Replay", "⏮ 前": "⏮ Prev", "⏭ 次": "⏭ Next", "再生速度": "Playback speed", "巻き順": "Winding order", "毛先の処理": "Tip handling", "巻き順: トップ→ネープ": "Order: top → nape", "巻き順: ネープ→トップ": "Order: nape → top", "毛先: 毛先から巻く": "Tips: wind from the ends", "毛先: 外す（逃がす）": "Tips: leave out (release)", "巻き順マップ（クリックでジャンプ）": "Winding-order map (click to jump)", "薄い = これから ／ 濃い = 巻き済み ／ 金枠 = いま巻いている1本": "Light = to come / Dark = done / Gold outline = the rod being wound now", "まだ配置データがありません。": "There is no layout data yet.", "上のプリセットを選ぶか、「スタイル→展開図」タブで写真から配置を生成すると、": "Choose a preset above, or generate a layout from a photo in the “Style → Layout” tab, and ", "ここで巻き順ムービーを再生できます。": "you can play the winding-order animation here.", "① スライスを取り、角度 {a}° にパネルを引き出す": "① Take a section and pull the panel out at {a}°", "② 毛先を外す（先端は巻き込まずに逃がす）": "② Leave the tips out (release the ends without winding them in)", "② 毛先を整えて、カバーのスリットに通す準備": "② Tidy the tips and get ready to pass them through the cover slit", "③ {m}mmロッドを毛先位置にセット（スリットに通す）": "③ Set the {m} mm rod at the tip position (pass it through the slit)", "④ カバーを閉じてロック — カチッ": "④ Close the cover and lock it — click", "⑤ 芯が回転し、一定テンションで根元へ巻き込む": "⑤ The core rotates and winds toward the root at an even tension", "⑥ 根元に到達 — 頭皮に密着させる": "⑥ Reached the root — seat it snugly against the scalp", "⑦ シリコンゴムを掛けて固定 — 完了": "⑦ Fix with the silicone band — done", "🎉 全 {n} 本の巻き込みが完了しました": "🎉 All {n} rods are wound in", "頭皮": "Scalp", "根元": "Root", "毛先": "Tips", "毛先は外す": "Tips left out", "カチッ": "Click", "角度": "Angle", "角度{a}°": "Angle {a}°", "{a}°（頭皮基準）": "{a}° (from the scalp)", "巻き方": "Winding method", "外す（逃がす）": "Leave out (release)", "毛先から巻き込む": "Wind in from the ends", "ねらい": "Aim", "{i}本目 / 全{n}本": "Rod {i} of {n}", "{i} / {n} 本 — ": "{i} / {n} rods — ", "スマートロッド サイズ・カラー早見表": "SMART ROD size & color chart", "ブルー": "Blue", "オレンジ": "Orange", "ピンク": "Pink", "B+ブルー": "B+ Blue", "B+グリーン": "B+ Green", "B+オレンジ": "B+ Orange", "B+ピンク": "B+ Pink", "強カール": "Strong curl", "自然な動き": "Natural movement", "ゆるめ": "Loose", "大ウェーブ": "Large wave", "ボリューム": "Volume", "← 細い・カール強い": "← Thin · stronger curl", "太い・自然な動き →": "Thick · natural movement →", "髪の長さ × 推奨サイズ × スタイル": "Hair length × recommended size × style", "長さ": "Length", "推奨サイズ": "Recommended size", "スタイル例": "Style examples", "ベリーショート (3〜6cm)": "Very short (3–6 cm)", "11・14mm 中心": "Mainly 11 / 14 mm", "メリハリ・フェード・ピンパーマ風": "Defined, fade, pin-perm look", "ショート (7〜10cm)": "Short (7–10 cm)", "11・14・16mm": "11 / 14 / 16 mm", "マッシュ・毛流れ・シャドウパーマ": "Mash, hair flow, shadow perm", "ミディアム (11〜15cm)": "Medium (11–15 cm)", "14・16・18mm": "14 / 16 / 18 mm", "センターパート・スパイラル": "Center part, spiral", "ロング (16cm以上)": "Long (16 cm and over)", "16・18・20mm": "16 / 18 / 20 mm", "ウルフ・ミディアムウルフ・強めスパイラル": "Wolf cut, medium wolf, strong spiral", "ボブ・首が見える": "Bob · neck visible", "襟足 11〜14mm ／ 襟足より上 16mm以上": "Nape 11–14 mm / above the nape 16 mm or larger", "上部に11mm等は強く出過ぎるためNG": "Using 11 mm etc. on the upper part comes out too strong — avoid", "ボブ・首が隠れる": "Bob · neck covered", "襟足 14mm以上 ／ 襟足より上 16mm以上": "Nape 14 mm or larger / above the nape 16 mm or larger", "大きめの収まりウェーブ": "Large, well-settled waves", "ミディアム女性 (鎖骨〜肩下)": "Women's medium (collarbone to below the shoulder)", "14〜20mm": "14–20 mm", "ウェーブの大きさをサイズで調整": "Adjust the wave size with the rod size", "セミロング女性 (肩下〜胸上)": "Women's semi-long (below the shoulder to above the chest)", "中間〜毛先の大きめウェーブ": "Larger waves from mid-lengths to the ends", "ロング女性 (胸下)": "Women's long (below the chest)", "ゆるウェーブ〜動きのある大カール": "Soft waves to large, lively curls", "サイズの考え方は従来ロッドと完全に同じ。今までと同じ基準でロッドを選べます。": "The way to think about sizes is exactly the same as with conventional rods. You can choose rods by the same criteria you have always used.", "5つの巻き方とおすすめスタイル": "The 5 winding methods and recommended styles", "カール": "Curl", "おすすめ": "Recommended for", "ヒラ巻き": "Flat wind", "ふんわりゆるカール": "Soft, loose curls", "ナチュラル・フェミニン・抜け感": "Natural, feminine, effortless", "スパイラル巻き": "Spiral wind", "しっかり弾むカール": "Firm, bouncy curls", "華やか・ゴージャス・パーティー": "Glamorous, gorgeous, party", "ツイシー巻き": "Twisty wind", "内+外ミックスカール": "Mixed in + out curls", "トレンド・抜け感・こなれ感": "Trendy, effortless, polished-casual", "ツイストスパイラル": "Twist spiral", "ねじりエアリー": "Twisted, airy", "カジュアル・外国人風・動き重視": "Casual, Western-style, movement-focused", "柔らか揺れウェーブ": "Soft swaying waves", "フェミニン・ロマンティック・デート": "Feminine, romantic, date look", "従来ロッド → スマートロッド 変換表": "Conventional rod → SMART ROD conversion chart", "従来のロッド": "Conventional rod", "スマートロッド": "SMART ROD", "カール感": "Curl feel", "従来 {x}": "Conventional {x}", "ブルー（11mm）": "Blue (11 mm)", "オレンジ（14mm）": "Orange (14 mm)", "ピンク（16mm）": "Pink (16 mm)", "B+ブルー（18mm）": "B+ Blue (18 mm)", "B+グリーン（20mm）": "B+ Green (20 mm)", "B+オレンジ（22mm）": "B+ Orange (22 mm)", "B+ピンク（24mm）": "B+ Pink (24 mm)", "スタイル・部位別 推奨サイズ": "Recommended size by style and zone", "スタイル / 部位": "Style / zone", "ポイント": "Tip", "ニュアンスパーマ": "Nuance perm", "20mm以上（20・22・24）": "20 mm and up (20 / 22 / 24)", "細めではなく大きめのウェーブで質感を作る": "Create the texture with larger waves, not thin ones", "フェザーパーマ（はねる）": "Feather perm (flick-out)", "18mm以上（18・20・22・24）": "18 mm and up (18 / 20 / 22 / 24)", "毛先の外ハネを大きく柔らかく": "Make the flick-out at the ends large and soft", "ボブ（首が見える）": "Bob (neck visible)", "襟足 11〜14mm": "Nape 11–14 mm", "襟足より上は必ず16mm以上": "Always 16 mm or larger above the nape", "ボブ（首が隠れる）": "Bob (neck covered)", "襟足 14mm以上": "Nape 14 mm or larger", "前髪（メンズ・5cm以下）": "Bangs (men's, 5 cm or shorter)", "11mm": "11 mm", "短い前髪はブルーで動きを": "Use Blue to add movement to short bangs", "前髪（メンズ・5cm超）": "Bangs (men's, over 5 cm)", "14・16mm": "14 / 16 mm", "自然な立ち上がりと毛流れ": "Natural lift and hair flow", "前髪（レディース）": "Bangs (women's)", "18mm〜": "18 mm and up", "ふんわり大きく。細いロッドは強く出過ぎる": "Soft and large. Thin rods come out too strong", "ロッドオフ（外し方）と テストカールの基準": "Taking the rods out, and test-curl standards", "外す順番：": "Order of removal:", "ネープ（襟足）から上に向かって順に外す。上から外すと、外した毛が下のロッドに絡みテンションが乱れるため。": "Remove from the nape upward. If you remove from the top, the released hair tangles in the rods below and disturbs the tension.", "テストカールの放置時間：": "Test-curl processing time:", "・傷んでいないバージン毛 ……": "· Undamaged virgin hair ……", "10分": "10 min", "・カラー / パーマ / 縮毛矯正の履歴あり（ブリーチは除く）……": "· History of color / perm / straightening (excluding bleach) ……", "5分": "5 min", "・ハイダメージ・ブリーチ毛 ……": "· High damage / bleached hair ……", "基本的に推奨しません。": "Generally not recommended. ", "施術の可否は毛髪診断のうえ、美容師とお客様のご相談・ご判断で。": "Whether to proceed is decided after a hair diagnosis, through consultation between the stylist and the client.", "テストカールの基準写真（サイズ別ウェーブ見本）": "Test-curl reference photos (wave samples by size)", "スマートロッド各サイズで巻いたときのウェーブの出方の見本。テストカール判定の参考にしてください。": "Samples of how the waves come out with each SMART ROD size. Use them as a reference when judging a test curl.", "写真枠": "Photo slot", "11mm ブルー": "11 mm Blue", "14mm オレンジ": "14 mm Orange", "16mm ピンク": "16 mm Pink", "18mm B+ブルー": "18 mm B+ Blue", "20mm B+グリーン": "20 mm B+ Green", "22mm B+オレンジ": "22 mm B+ Orange", "24mm B+ピンク": "24 mm B+ Pink", "{n}mm 基準写真": "{n} mm reference photo", "逆巻きのコツは？": "Tips for reverse winding?", "短い髪が巻けない": "I can't wind short hair", "外国人風にするには？": "How do I get a Western-style look?", "上巻きと逆巻きの違い": "Over-winding vs. reverse winding", "ゴム跡が気になる": "Worried about band marks", "ゆるいカールにしたい": "I want soft curls", "スマートロッドの使い方・巻き方・サイズ選び・トラブル対処": "How to use SMART ROD, winding methods, choosing sizes, troubleshooting", "なんでも質問してください。": "Ask me anything.", "「逆巻きのコツは？」「短い髪が巻けない」「外国人風にするには？」": "“Tips for reverse winding?” “I can't wind short hair.” “How do I get a Western-style look?”", "質問を入力…": "Type your question…", "スマートロッド公式解説動画。学習・確認用にご活用ください。": "Official SMART ROD tutorial videos. Use them for learning and review.", "基本の巻き方": "Basic winding", "上巻き（基本）": "Over-winding (basic)", "ヒラ巻き・カバー上": "Flat wind · cover on top", "下巻き（基本）": "Under-winding (basic)", "ヒラ巻き・カバー下": "Flat wind · cover underneath", "逆巻き": "Reverse winding", "カバー下": "Cover underneath", "ゴムかけのポイント": "Tips for placing the band", "シリコンゴム固定": "Fixing with the silicone band", "応用の巻き方": "Advanced winding", "中間巻き": "Mid-length winding", "毛先の長さ違い対応": "Handling uneven end lengths", "ツイスト巻き": "Twist winding", "波巻きパーマ": "Wave-wind perm", "短い髪の巻き方": "Winding short hair", "カバーでキャッチ": "Catch the hair with the cover", "解説・総合": "Overview", "総合解説 1": "Overview 1", "全体の流れ": "The whole flow", "総合解説 2": "Overview 2", "実演": "Live demonstration", "公式チャンネル": "Official channel", "全動画": "All videos", "工程変換・サイズ推定・展開図はAIによる提案です。最終的な仕上がりは髪質・薬剤・施術者の判断により異なります。": "Step conversion, size estimates and layout maps are AI suggestions. The final result depends on hair quality, chemicals and the stylist's judgment.", "アップロードした写真は解析のためにAIサービス（Anthropic社）へ送信され、当サイトのサーバーには保存されません。お客様の顔が写った写真は、ご本人の同意を得たうえでご利用ください。": "Uploaded photos are sent to an AI service (Anthropic) for analysis and are not stored on this site's servers. If a photo shows a client's face, please use it only with their consent.", "変換するカリキュラムを入力してください。": "Please enter the curriculum to convert.", "スマートロッド版に変換しています…": "Converting to the SMART ROD version…", "そのまま": "Unchanged", "簡略化": "Simplified", "不要": "Not needed", "従来": "Conventional", "スマートロッド版": "SMART ROD version", "工程": "steps", "{n}工程を削減": "{n} steps removed", "巻き工程の時短": "Winding time saved", "約½": "About ½", "ワインディング時間": "Winding time", "そのまま活きる": "Still applies", "簡略化される": "Gets simpler", "不要になる": "No longer needed", "完成スタイルを解析し、頭部展開図を設計しています…": "Analyzing the finished style and designing the head layout map…", "この画像は読み込めませんでした。JPGまたはPNGでお試しください（HEICは非対応です）。": "This image could not be loaded. Please try a JPG or PNG (HEIC is not supported).", "推定スタイル": "Estimated style", "ロッド合計": "Total rods", "{n} 本": "{n} rods", "{n}本": "{n}", "{n}サイズ使用": "{n} sizes used", "解析確度": "Confidence", "高": "High", "中": "Medium", "低": "Low", "頭部展開図（上面ビュー）": "Head layout map (top view)", "頭部展開図（上面）": "Head layout map (top)", "お客様を正面から見た配置（図の左＝お客様の右サイド）": "Placement as seen from the front of the client (left of the diagram = the client's right side)", "▶ 巻きムービーで再生": "▶ Play in animation", "📋 テキストをコピー": "📋 Copy text", "✓ コピーしました": "✓ Copied", "部位ごとのロッド配置": "Rod placement by zone", "使用ロッド": "Rod used", "カールの狙い": "Curl aim", "必要なスマートロッド（集計）": "SMART ROD needed (total)", "サイズ・カラー": "Size · color", "本数": "Quantity", "毛先コントロール:": "Tip control:", "確度: ": "Confidence: ", " この設計はたたき台です。最終調整は施術者が行ってください。": " This design is a starting draft. The stylist should make the final adjustments.", "前頭部": "Front", "トップ": "Top", "右サイド": "Right side", "左サイド": "Left side", "バック上": "Upper back", "バック下": "Lower back", "襟足": "Nape", "ワンカール": "One-curl", "ワンカール（下巻き・外ハネ）": "One-curl (under-wind, flick-out)", "展開図": "Layout map", "■ {s} 展開図 — {h}": "■ {s} layout map — {h}", "{p}: {r}({mm}mm) × {c}本 [{w}]": "{p}: {r} ({mm} mm) × {c} [{w}]", "本日の写真解析 残り{p}回": "Photo analyses left today: {p}", "本日の写真解析の無料回数に達しました。明日またお試しください。": "You have reached today's free limit for photo analysis. Please try again tomorrow.", "本日のAI変換・質問の無料回数に達しました。明日またお試しください。": "You have reached today's free limit for AI conversion and questions. Please try again tomorrow.", "ただいまアクセスが集中しています。しばらくしてからお試しください。": "The service is very busy right now. Please try again in a little while.", "AIが一時的に応答できませんでした。少し待ってからもう一度お試しください。": "The AI could not respond for the moment. Please wait a little and try again.", "時間内に解析が終わりませんでした。写真の枚数を減らして（1〜2枚）、もう一度お試しください。": "The analysis did not finish in time. Try again with fewer photos (1–2).", "入力内容を確認してください。": "Please check your input.", "入力が長すぎます。短くしてお試しください。": "The input is too long. Please shorten it and try again.", "通信に失敗しました。ネットワークをご確認ください。": "Communication failed. Please check your network connection.", "AI応答からJSONを抽出できませんでした。もう一度お試しください。": "Could not read the AI response. Please try again.", "AI応答が途中で切れた可能性があります。入力を分割して再実行してください。": "The AI response may have been cut off. Please split your input and try again.", "画像の枚数・サイズが大きすぎます。枚数を減らしてお試しください。": "The photos are too many or too large. Please try with fewer photos.", "利用規約に反する可能性があるため処理できませんでした。": "This could not be processed because it may violate the usage policy.", "スタイル情報を読み取れませんでした": "Could not read the style information", "図に配置できなかった部位: {x}": "Zones that could not be placed on the diagram: {x}", "この配置データは図に割り当てられませんでした。": "This layout data could not be assigned to the diagram.", "部位名（トップ／バック上／襟足 など）をご確認ください。": "Please check the zone names (Top / Upper back / Nape, etc.).", "毛先コントロール: {x}": "Tip control: {x}", "注意: {x}": "Note: {x}", "⚠️ {x}": "⚠️ {x}", "{i} / {n} 本 — {r}": "{i} / {n} rods — {r}", "1本": "1 rod", "1 本": "1 rod", "本": "rods", "写真は最大3枚までです。": "You can upload up to 3 photos.", "ご購入・お問い合わせ": "Orders & inquiries", "面を残して大きくワンカール": "Keep the surface and make one large curl", "中間のつなぎ": "Connects the middle section", "耳周りは自然に流す": "Let the hair around the ears flow naturally", "締めて収まり良く": "Tighten it so it sits neatly", "根元ふんわり": "Soft lift at the root", "大きな揺れ": "Large, swaying movement", "波のつなぎ": "Connects the waves", "顔まわり柔らかく": "Soft around the face", "首元は細かく締める": "Keep the neckline tight and fine", "前方向の毛流れ・動き": "Forward hair flow and movement", "前髪は抜け感": "Effortless, airy bangs", "つむじ周りに動き": "Movement around the crown", "耳周りタイト": "Tight around the ears", "えり足を締める": "Tighten the nape", "しっかりリッジ": "Firm ridges", "前髪も同調": "Bangs match the rest", "後頭部に丸み": "Roundness at the back of the head", "えり上も均一": "Even above the nape too", "サイドタイト": "Tight sides", "締める": "Tighten", "大きめのゆるい動き": "Large, loose movement", "前髪はふんわり": "Soft, fluffy bangs", "つむじ周りに柔らかい動き": "Soft movement around the crown", "耳周りは自然に": "Natural around the ears", "面を残して毛先だけ外へ": "Keep the surface, flick only the ends outward", "ハネの主役": "The main flick-out", "サイドも同調して外へ": "Sides flick out to match", "えり足からしっかりハネ上げ": "Flick up firmly from the nape"}, "zh-TW": {"🆓 無料でご利用いただけます。AI機能は1日の利用回数に上限があります。": "🆓 可免費使用。AI 功能每日有使用次數上限。", "スマートロッド導入支援 — カリキュラム変換・展開図・巻きムービー・スタッフ教育": "SMART ROD 導入支援 — 課程轉換・配置展開圖・捲法動畫・員工教育", "カリキュラム変換": "課程轉換", "スタイル→展開図": "造型→展開圖", "巻きムービー": "捲法動畫", "サイズ早見表": "尺寸速查表", "AIに質問": "詢問 AI", "動画": "影片", "従来のカリキュラム手順を貼り付け": "貼上現有的課程步驟", "既存のパーマ教育マニュアルや手順書をそのまま貼り付けてください。各工程をスマートロッド版へ変換します。": "請直接貼上現有的燙髮教育手冊或步驟書，各步驟將轉換為 SMART ROD 版本。", "スマートロッド版に変換": "轉換為 SMART ROD 版", "例：\n1. ペーパーを被せてスプレイヤーでしっかり濡らす\n2. 人差し指でペーパーと髪の毛をロッドに巻き付ける\n3. ゴムは通常の掛け方。外れやすいところはあや掛け\n...": "例：\n1. 蓋上髮尾紙並用噴霧器充分噴濕\n2. 用食指將髮尾紙與頭髮捲繞在髮捲上\n3. 以一般方式套橡皮筋，容易鬆脫處改用交叉套法\n...", "完成スタイルの写真をアップロード": "上傳完成造型的照片", "なりたい完成スタイルの写真（SNS保存画像・動画フレームなど）をアップすると、スマートロッドの推定配置・サイズ・巻き方を提案します。複数枚（横・後ろ等）あると精度が上がります。": "上傳想要的完成造型照片（社群媒體儲存圖片、影片截圖等），AI 會提出 SMART ROD 的預估配置、尺寸與捲法。提供多張（側面、背面等）可提高準確度。", "完成スタイル写真をドラッグ、またはクリック": "將完成造型照片拖曳至此，或點擊選擇", "JPG / PNG・複数選択可": "JPG / PNG・可選多張", "補足情報（任意・タップで選択）": "補充資訊（選填・點選）", "性別スタイル": "性別造型", "メンズ": "男性", "レディース": "女性", "レングス": "長度", "ベリーショート": "超短髮", "ショート": "短髮", "ミディアム": "中長髮", "セミロング": "中長偏長", "ロング": "長髮", "髪の状態": "髮況", "バージン": "未受損髮", "ダメージ（パーマ・カラー・縮毛）": "受損髮（燙・染・離子燙史）", "ハイダメージ・ブリーチ": "高度受損・漂髮", "ウェーブの質感": "捲度質感", "ゆるく": "柔和", "強め": "強烈", "かかり始め": "捲度起始位置", "根本": "從髮根", "根本から◯cm": "距髮根 ◯ 公分", "前髪": "瀏海", "緩め": "柔和", "ブリーチ毛・ハイダメージ毛へのパーマは基本的に推奨しません。": "原則上不建議對漂髮或高度受損髮進行燙髮。", "状態により結果の差が大きいため、施術の可否は毛髪診断のうえ、美容師とお客様のご相談・ご判断でお願いします（行う場合はテストカールを短めに・慎重に）。": "由於結果會因髮況而有很大差異，是否施作請在髮質診斷後，由設計師與顧客商議決定（若要進行，請縮短試捲時間並謹慎處理）。", "その他メモ（任意）": "其他備註（選填）", "例：外国人風の動き／顔まわりは流したい 等": "例：外國人風格的動感／臉周想要往後帶", "展開図を生成（頭部マップ付き）": "產生展開圖（含頭部配置圖）", "アドバンス（応用）巻き方の解説 ─ 波巻き・リバース・ツイストスパイラル": "進階捲法解說 ─ 波浪捲・反捲・扭轉螺旋捲", "再現ハードルが高いため、これらは": "由於重現難度較高，這些捲法", "AIの自動提案には含まれません": "不包含在 AI 的自動建議中", "。自動生成された展開図の一部を、下記を参考にご自身で置き換えてアレンジしてください。": "。請參考下方說明，自行替換自動產生的展開圖中的部分配置。", "波巻き": "波浪捲", "─ ロッドを上下交互に配置し、髪をS字に通して柔らかく揺れるウェーブを作る巻き方。フェミニン・韓国系スタイル向き。": "─ 將髮捲上下交錯配置，讓頭髮呈 S 形穿過，做出柔軟搖曳的波浪。適合女性風格與韓系造型。", "アレンジ例：バック上〜中間の2〜4本だけ波巻きに置き換えると表面に柔らかい揺れが出ます。スライスは薄めに、リッジの高さを揃えるのがコツ。": "應用範例：只將後腦上部到中段的 2～4 支改為波浪捲，表面就會出現柔和的律動。髮片取薄一些，並讓波峰高度一致是訣竅。", "リバース（逆巻き）": "反捲（逆向捲）", "─ 顔から遠ざかる方向へ回転させる巻き方。フォワード（顔向き）と交互に混ぜると、外国人風の立体的な動きになる。": "─ 朝遠離臉部的方向旋轉的捲法。與正捲（朝向臉部）交替搭配，能做出立體的外國人風動感。", "アレンジ例：顔まわり・サイドをフォワード⇄リバース交互に。左右の耳側で回転方向が逆になる点に注意。カバーの向きも回転方向に合わせて。": "應用範例：臉周與兩側採正捲與反捲交替。注意左右耳側的旋轉方向相反，護套的方向也要配合旋轉方向。", "ツイストスパイラル（ねじり巻き）": "扭轉螺旋捲（扭轉捲法）", "─ 毛束をねじってから斜めに巻き、エアリーな束感・質感を出す。カジュアル・外国人風・動き重視。": "─ 先將髮束扭轉再斜向捲繞，做出輕盈的束感與質感。適合休閒、外國人風與重視動感的造型。", "アレンジ例：トップ〜バック上の数本のみ置き換え。ねじりの回数で質感が大きく変わるため、1本テストカールで確認してから全体へ。": "應用範例：只替換頭頂到後腦上部的幾支。扭轉次數會大幅改變質感，請先用 1 支試捲確認後再套用到整頭。", "巻き工程ムービー（線図シミュレーション）": "捲繞流程動畫（線圖模擬）", "「スタイル→展開図」で生成した配置、または下のプリセットを選ぶと、1本ずつの巻き工程（角度 → 毛先処理 → 挿入 → ロック → 巻き込み → ゴム固定）と、全頭の巻き順（トップ→下の段→耳周り→ネープ）をアニメーションで再生します。スタッフ教育・施術前の共有にご利用ください。": "選擇在「造型→展開圖」產生的配置或下方預設範例，即可以動畫播放每一支的捲繞流程（角度 → 髮尾處理 → 插入 → 鎖定 → 捲入 → 套橡皮筋固定）與整頭的捲髮順序（頭頂→下方髮層→耳周→後頸）。可用於員工教育與施作前的溝通。", "📷 最新の展開図": "📷 最新展開圖", "②で生成すると選べます": "在②產生後即可選擇", "生成済み": "已產生", "最新の展開図": "最新展開圖", "ワンカールボブ": "單捲鮑伯", "横巻き・段構成の基本形": "橫向捲繞・分層配置的基本型", "ゆるウェーブボブ": "柔波鮑伯", "サイズミックスの柔らか波": "混合尺寸的柔和波浪", "メンズカールマッシュ": "男士捲度蘑菇頭", "毛流れに沿う前方向配置": "順著髮流朝前配置", "メンズ強めパーマ": "男士強捲燙", "11mm主体のしっかりカール": "以 11mm 為主的紮實捲度", "ニュアンスパーマ（大きめ）": "質感燙（大捲）", "20mm以上で作る質感": "以 20mm 以上做出的質感", "フェザーパーマ（外ハネ）": "羽毛燙（外翹）", "18mm以上・毛先ワンカール": "18mm 以上・髮尾單捲", "1.角度": "1.角度", "2.毛先": "2.髮尾", "3.挿入": "3.插入", "4.ロック": "4.鎖定", "5.巻き込み": "5.捲入", "6.根元": "6.髮根", "7.ゴム": "7.橡皮筋", "▶ 再生": "▶ 播放", "⏸ 一時停止": "⏸ 暫停", "▶ もう一度": "▶ 再播放一次", "⏮ 前": "⏮ 上一支", "⏭ 次": "⏭ 下一支", "再生速度": "播放速度", "巻き順": "捲髮順序", "毛先の処理": "髮尾處理", "巻き順: トップ→ネープ": "順序：頭頂→後頸", "巻き順: ネープ→トップ": "順序：後頸→頭頂", "毛先: 毛先から巻く": "髮尾：從髮尾開始捲", "毛先: 外す（逃がす）": "髮尾：不捲入（放開）", "巻き順マップ（クリックでジャンプ）": "捲髮順序圖（點擊可跳到該支）", "薄い = これから ／ 濃い = 巻き済み ／ 金枠 = いま巻いている1本": "淺色＝尚未捲／深色＝已捲完／金框＝目前正在捲的這一支", "まだ配置データがありません。": "目前還沒有配置資料。", "上のプリセットを選ぶか、「スタイル→展開図」タブで写真から配置を生成すると、": "請選擇上方的預設範例，或在「造型→展開圖」分頁用照片產生配置，", "ここで巻き順ムービーを再生できます。": "即可在此播放捲髮順序動畫。", "① スライスを取り、角度 {a}° にパネルを引き出す": "① 取髮片，以 {a}° 角度將髮片拉出", "② 毛先を外す（先端は巻き込まずに逃がす）": "② 髮尾不捲入（將末端放開不捲入）", "② 毛先を整えて、カバーのスリットに通す準備": "② 整理髮尾，準備穿過護套的縫隙", "③ {m}mmロッドを毛先位置にセット（スリットに通す）": "③ 將 {m}mm 髮捲放到髮尾位置（穿過縫隙）", "④ カバーを閉じてロック — カチッ": "④ 闔上護套並鎖定 — 喀嚓", "⑤ 芯が回転し、一定テンションで根元へ巻き込む": "⑤ 捲芯旋轉，以均勻張力捲向髮根", "⑥ 根元に到達 — 頭皮に密着させる": "⑥ 到達髮根 — 緊貼頭皮", "⑦ シリコンゴムを掛けて固定 — 完了": "⑦ 套上矽膠圈固定 — 完成", "🎉 全 {n} 本の巻き込みが完了しました": "🎉 全部 {n} 支都已捲完", "頭皮": "頭皮", "根元": "髮根", "毛先": "髮尾", "毛先は外す": "髮尾不捲入", "カチッ": "喀嚓", "角度": "角度", "角度{a}°": "角度 {a}°", "{a}°（頭皮基準）": "{a}°（以頭皮為基準）", "巻き方": "捲法", "外す（逃がす）": "不捲入（放開）", "毛先から巻き込む": "從髮尾捲入", "ねらい": "目的", "{i}本目 / 全{n}本": "第 {i} 支 / 共 {n} 支", "{i} / {n} 本 — ": "{i} / {n} 支 — ", "スマートロッド サイズ・カラー早見表": "SMART ROD 尺寸・顏色速查表", "ブルー": "藍色", "オレンジ": "橘色", "ピンク": "粉紅色", "B+ブルー": "B+藍色", "B+グリーン": "B+綠色", "B+オレンジ": "B+橘色", "B+ピンク": "B+粉紅色", "強カール": "強捲", "自然な動き": "自然動感", "ゆるめ": "偏鬆", "大ウェーブ": "大波浪", "ボリューム": "蓬鬆量感", "← 細い・カール強い": "← 細・捲度強", "太い・自然な動き →": "粗・自然動感 →", "髪の長さ × 推奨サイズ × スタイル": "髮長 × 建議尺寸 × 造型", "長さ": "長度", "推奨サイズ": "建議尺寸", "スタイル例": "造型範例", "ベリーショート (3〜6cm)": "超短髮 (3～6cm)", "11・14mm 中心": "以 11・14mm 為主", "メリハリ・フェード・ピンパーマ風": "俐落分明・漸層・細捲燙風格", "ショート (7〜10cm)": "短髮 (7～10cm)", "11・14・16mm": "11・14・16mm", "マッシュ・毛流れ・シャドウパーマ": "蘑菇頭・髮流・陰影燙", "ミディアム (11〜15cm)": "中長髮 (11～15cm)", "14・16・18mm": "14・16・18mm", "センターパート・スパイラル": "中分・螺旋捲", "ロング (16cm以上)": "長髮 (16cm 以上)", "16・18・20mm": "16・18・20mm", "ウルフ・ミディアムウルフ・強めスパイラル": "狼尾剪・中長狼尾・強螺旋捲", "ボブ・首が見える": "鮑伯頭・露出頸部", "襟足 11〜14mm ／ 襟足より上 16mm以上": "後頸 11～14mm ／ 後頸以上 16mm 以上", "上部に11mm等は強く出過ぎるためNG": "上方使用 11mm 等會捲得過強，請避免", "ボブ・首が隠れる": "鮑伯頭・遮住頸部", "襟足 14mm以上 ／ 襟足より上 16mm以上": "後頸 14mm 以上 ／ 後頸以上 16mm 以上", "大きめの収まりウェーブ": "大波浪且服貼", "ミディアム女性 (鎖骨〜肩下)": "女性中長髮 (鎖骨～肩膀下)", "14〜20mm": "14～20mm", "ウェーブの大きさをサイズで調整": "以尺寸調整波浪大小", "セミロング女性 (肩下〜胸上)": "女性中長偏長髮 (肩下～胸上)", "中間〜毛先の大きめウェーブ": "中段到髮尾的大波浪", "ロング女性 (胸下)": "女性長髮 (胸下)", "ゆるウェーブ〜動きのある大カール": "柔和波浪～動感大捲", "サイズの考え方は従来ロッドと完全に同じ。今までと同じ基準でロッドを選べます。": "尺寸的思考方式與傳統髮捲完全相同，可依照過去相同的標準選擇髮捲。", "5つの巻き方とおすすめスタイル": "5 種捲法與推薦造型", "カール": "捲度", "おすすめ": "推薦", "ヒラ巻き": "平捲", "ふんわりゆるカール": "蓬鬆柔和的捲度", "ナチュラル・フェミニン・抜け感": "自然・女性風・慵懶感", "スパイラル巻き": "螺旋捲", "しっかり弾むカール": "紮實彈力捲", "華やか・ゴージャス・パーティー": "華麗・奢華・派對", "ツイシー巻き": "Twisty 捲", "内+外ミックスカール": "內外混合捲", "トレンド・抜け感・こなれ感": "流行・慵懶感・隨性有型", "ツイストスパイラル": "扭轉螺旋捲", "ねじりエアリー": "扭轉輕盈感", "カジュアル・外国人風・動き重視": "休閒・外國人風・重視動感", "柔らか揺れウェーブ": "柔軟搖曳波浪", "フェミニン・ロマンティック・デート": "女性風・浪漫・約會", "従来ロッド → スマートロッド 変換表": "傳統髮捲 → SMART ROD 對照表", "従来のロッド": "傳統髮捲", "スマートロッド": "SMART ROD", "カール感": "捲度感", "従来 {x}": "傳統 {x}", "ブルー（11mm）": "藍色 (11mm)", "オレンジ（14mm）": "橘色 (14mm)", "ピンク（16mm）": "粉紅色 (16mm)", "B+ブルー（18mm）": "B+藍色 (18mm)", "B+グリーン（20mm）": "B+綠色 (20mm)", "B+オレンジ（22mm）": "B+橘色 (22mm)", "B+ピンク（24mm）": "B+粉紅色 (24mm)", "スタイル・部位別 推奨サイズ": "各造型・部位的建議尺寸", "スタイル / 部位": "造型 / 部位", "ポイント": "重點", "ニュアンスパーマ": "質感燙", "20mm以上（20・22・24）": "20mm 以上 (20・22・24)", "細めではなく大きめのウェーブで質感を作る": "不用細捲，以較大的波浪做出質感", "フェザーパーマ（はねる）": "羽毛燙（外翹）", "18mm以上（18・20・22・24）": "18mm 以上 (18・20・22・24)", "毛先の外ハネを大きく柔らかく": "讓髮尾的外翹大而柔和", "ボブ（首が見える）": "鮑伯頭（露出頸部）", "襟足 11〜14mm": "後頸 11～14mm", "襟足より上は必ず16mm以上": "後頸以上一律使用 16mm 以上", "ボブ（首が隠れる）": "鮑伯頭（遮住頸部）", "襟足 14mm以上": "後頸 14mm 以上", "前髪（メンズ・5cm以下）": "瀏海（男性・5cm 以下）", "11mm": "11mm", "短い前髪はブルーで動きを": "短瀏海用藍色做出動感", "前髪（メンズ・5cm超）": "瀏海（男性・超過 5cm）", "14・16mm": "14・16mm", "自然な立ち上がりと毛流れ": "自然的立起與髮流", "前髪（レディース）": "瀏海（女性）", "18mm〜": "18mm 以上", "ふんわり大きく。細いロッドは強く出過ぎる": "蓬鬆大捲。太細的髮捲會捲得過強", "ロッドオフ（外し方）と テストカールの基準": "卸除髮捲的方式與試捲標準", "外す順番：": "卸除順序：", "ネープ（襟足）から上に向かって順に外す。上から外すと、外した毛が下のロッドに絡みテンションが乱れるため。": "從後頸開始往上依序卸除。若由上方開始卸除，鬆開的頭髮會纏到下方髮捲而打亂張力。", "テストカールの放置時間：": "試捲的停留時間：", "・傷んでいないバージン毛 ……": "・未受損的原生髮 ……", "10分": "10 分鐘", "・カラー / パーマ / 縮毛矯正の履歴あり（ブリーチは除く）……": "・有染髮／燙髮／離子燙史（不含漂髮）……", "5分": "5 分鐘", "・ハイダメージ・ブリーチ毛 ……": "・高度受損・漂髮 ……", "基本的に推奨しません。": "原則上不建議。", "施術の可否は毛髪診断のうえ、美容師とお客様のご相談・ご判断で。": "是否施作請在髮質診斷後，由設計師與顧客商議決定。", "テストカールの基準写真（サイズ別ウェーブ見本）": "試捲參考照片（各尺寸波浪範例）", "スマートロッド各サイズで巻いたときのウェーブの出方の見本。テストカール判定の参考にしてください。": "各尺寸 SMART ROD 捲出的波浪範例，請作為判斷試捲結果的參考。", "写真枠": "照片位置", "11mm ブルー": "11mm 藍色", "14mm オレンジ": "14mm 橘色", "16mm ピンク": "16mm 粉紅色", "18mm B+ブルー": "18mm B+藍色", "20mm B+グリーン": "20mm B+綠色", "22mm B+オレンジ": "22mm B+橘色", "24mm B+ピンク": "24mm B+粉紅色", "{n}mm 基準写真": "{n}mm 參考照片", "逆巻きのコツは？": "反捲有什麼訣竅？", "短い髪が巻けない": "短髮捲不起來", "外国人風にするには？": "要怎麼做出外國人風格？", "上巻きと逆巻きの違い": "上捲與反捲的差別", "ゴム跡が気になる": "在意橡皮筋痕跡", "ゆるいカールにしたい": "想做柔和的捲度", "スマートロッドの使い方・巻き方・サイズ選び・トラブル対処": "SMART ROD 的使用方式、捲法、尺寸選擇、問題排除", "なんでも質問してください。": "歡迎隨時提問。", "「逆巻きのコツは？」「短い髪が巻けない」「外国人風にするには？」": "「反捲有什麼訣竅？」「短髮捲不起來」「要怎麼做出外國人風格？」", "質問を入力…": "請輸入問題…", "スマートロッド公式解説動画。学習・確認用にご活用ください。": "SMART ROD 官方教學影片，可用於學習與確認。", "基本の巻き方": "基本捲法", "上巻き（基本）": "上捲（基本）", "ヒラ巻き・カバー上": "平捲・護套在上", "下巻き（基本）": "下捲（基本）", "ヒラ巻き・カバー下": "平捲・護套在下", "逆巻き": "反捲", "カバー下": "護套在下", "ゴムかけのポイント": "套橡皮筋的重點", "シリコンゴム固定": "以矽膠圈固定", "応用の巻き方": "進階捲法", "中間巻き": "中段捲法", "毛先の長さ違い対応": "應對髮尾長度不一", "ツイスト巻き": "扭轉捲", "波巻きパーマ": "波浪捲燙", "短い髪の巻き方": "短髮的捲法", "カバーでキャッチ": "用護套抓住髮絲", "解説・総合": "綜合解說", "総合解説 1": "綜合解說 1", "全体の流れ": "整體流程", "総合解説 2": "綜合解說 2", "実演": "實際示範", "公式チャンネル": "官方頻道", "全動画": "全部影片", "工程変換・サイズ推定・展開図はAIによる提案です。最終的な仕上がりは髪質・薬剤・施術者の判断により異なります。": "工序轉換、尺寸推定與展開圖皆為 AI 的建議。最終成果會依髮質、藥劑與施作者的判斷而異。", "アップロードした写真は解析のためにAIサービス（Anthropic社）へ送信され、当サイトのサーバーには保存されません。お客様の顔が写った写真は、ご本人の同意を得たうえでご利用ください。": "上傳的照片會傳送至 AI 服務（Anthropic 公司）進行分析，不會儲存在本網站的伺服器。若照片中有顧客的臉，請在取得本人同意後再使用。", "変換するカリキュラムを入力してください。": "請輸入要轉換的課程內容。", "スマートロッド版に変換しています…": "正在轉換為 SMART ROD 版…", "そのまま": "維持不變", "簡略化": "簡化", "不要": "不需要", "従来": "傳統", "スマートロッド版": "SMART ROD 版", "工程": "道工序", "{n}工程を削減": "減少 {n} 道工序", "巻き工程の時短": "捲繞時間縮短", "約½": "約 ½", "ワインディング時間": "捲髮時間", "そのまま活きる": "可直接沿用", "簡略化される": "變簡單", "不要になる": "變得不需要", "完成スタイルを解析し、頭部展開図を設計しています…": "正在分析完成造型並設計頭部展開圖…", "この画像は読み込めませんでした。JPGまたはPNGでお試しください（HEICは非対応です）。": "無法讀取這張圖片，請改用 JPG 或 PNG（不支援 HEIC）。", "推定スタイル": "預估造型", "ロッド合計": "髮捲總數", "{n} 本": "{n} 支", "{n}本": "{n} 支", "{n}サイズ使用": "使用 {n} 種尺寸", "解析確度": "分析可信度", "高": "高", "中": "中", "低": "低", "頭部展開図（上面ビュー）": "頭部展開圖（俯視）", "頭部展開図（上面）": "頭部展開圖（俯視）", "お客様を正面から見た配置（図の左＝お客様の右サイド）": "從顧客正面看到的配置（圖左＝顧客的右側）", "▶ 巻きムービーで再生": "▶ 以捲法動畫播放", "📋 テキストをコピー": "📋 複製文字", "✓ コピーしました": "✓ 已複製", "部位ごとのロッド配置": "各部位的髮捲配置", "使用ロッド": "使用髮捲", "カールの狙い": "捲度目的", "必要なスマートロッド（集計）": "所需 SMART ROD（合計）", "サイズ・カラー": "尺寸・顏色", "本数": "數量", "毛先コントロール:": "髮尾控制：", "確度: ": "可信度：", " この設計はたたき台です。最終調整は施術者が行ってください。": " 此設計僅為初稿，最終調整請由施作者進行。", "前頭部": "前頭部", "トップ": "頭頂", "右サイド": "右側", "左サイド": "左側", "バック上": "後腦上部", "バック下": "後腦下部", "襟足": "後頸", "ワンカール": "單捲", "ワンカール（下巻き・外ハネ）": "單捲（下捲・外翹）", "展開図": "展開圖", "■ {s} 展開図 — {h}": "■ {s} 展開圖 — {h}", "{p}: {r}({mm}mm) × {c}本 [{w}]": "{p}：{r} ({mm}mm) × {c} 支 [{w}]", "本日の写真解析 残り{p}回": "今日剩餘照片分析次數：{p} 次", "本日の写真解析の無料回数に達しました。明日またお試しください。": "今日的免費照片分析次數已用完，請明天再試。", "本日のAI変換・質問の無料回数に達しました。明日またお試しください。": "今日的 AI 轉換與提問免費次數已用完，請明天再試。", "ただいまアクセスが集中しています。しばらくしてからお試しください。": "目前使用人數較多，請稍後再試。", "AIが一時的に応答できませんでした。少し待ってからもう一度お試しください。": "AI 暫時無法回應，請稍候再試一次。", "時間内に解析が終わりませんでした。写真の枚数を減らして（1〜2枚）、もう一度お試しください。": "分析未能在時間內完成，請減少照片張數（1～2 張）後再試一次。", "入力内容を確認してください。": "請確認輸入內容。", "入力が長すぎます。短くしてお試しください。": "輸入內容過長，請縮短後再試。", "通信に失敗しました。ネットワークをご確認ください。": "連線失敗，請確認網路狀態。", "AI応答からJSONを抽出できませんでした。もう一度お試しください。": "無法解讀 AI 的回應，請再試一次。", "AI応答が途中で切れた可能性があります。入力を分割して再実行してください。": "AI 的回應可能被截斷，請將輸入內容分段後重新執行。", "画像の枚数・サイズが大きすぎます。枚数を減らしてお試しください。": "照片張數過多或檔案過大，請減少張數後再試。", "利用規約に反する可能性があるため処理できませんでした。": "因可能違反使用規範而無法處理。", "スタイル情報を読み取れませんでした": "無法讀取造型資訊", "図に配置できなかった部位: {x}": "無法放到圖上的部位：{x}", "この配置データは図に割り当てられませんでした。": "這份配置資料無法對應到圖上。", "部位名（トップ／バック上／襟足 など）をご確認ください。": "請確認部位名稱（頭頂／後腦上部／後頸 等）。", "毛先コントロール: {x}": "髮尾控制：{x}", "注意: {x}": "注意：{x}", "⚠️ {x}": "⚠️ {x}", "{i} / {n} 本 — {r}": "{i} / {n} 支 — {r}", "1本": "1 支", "1 本": "1 支", "本": "支", "写真は最大3枚までです。": "最多可上傳 3 張照片。", "ご購入・お問い合わせ": "購買・洽詢", "面を残して大きくワンカール": "保留表面，捲出一個大單捲", "中間のつなぎ": "銜接中段", "耳周りは自然に流す": "耳周自然帶過", "締めて収まり良く": "收緊讓整體服貼", "根元ふんわり": "髮根蓬鬆", "大きな揺れ": "大幅度的搖曳感", "波のつなぎ": "銜接波浪", "顔まわり柔らかく": "臉周柔和", "首元は細かく締める": "頸部周圍捲細一點收緊", "前方向の毛流れ・動き": "朝前的髮流與動感", "前髪は抜け感": "瀏海呈現慵懶感", "つむじ周りに動き": "旋周帶出動感", "耳周りタイト": "耳周收緊", "えり足を締める": "收緊後頸", "しっかりリッジ": "做出明確的波峰", "前髪も同調": "瀏海同步呼應", "後頭部に丸み": "後腦呈現圓弧", "えり上も均一": "後頸上方也保持均勻", "サイドタイト": "兩側收緊", "締める": "收緊", "大きめのゆるい動き": "大而柔和的動感", "前髪はふんわり": "瀏海蓬鬆柔和", "つむじ周りに柔らかい動き": "旋周帶出柔和動感", "耳周りは自然に": "耳周保持自然", "面を残して毛先だけ外へ": "保留表面，只讓髮尾外翹", "ハネの主役": "外翹的主角", "サイドも同調して外へ": "兩側同步外翹", "えり足からしっかりハネ上げ": "從後頸確實向上翹起"}, "zh-CN": {"🆓 無料でご利用いただけます。AI機能は1日の利用回数に上限があります。": "🆓 可免费使用。AI 功能每日有使用次数上限。", "スマートロッド導入支援 — カリキュラム変換・展開図・巻きムービー・スタッフ教育": "SMART ROD 导入支持 — 课程转换・配置展开图・卷法动画・员工教育", "カリキュラム変換": "课程转换", "スタイル→展開図": "造型→展开图", "巻きムービー": "卷法动画", "サイズ早見表": "尺寸速查表", "AIに質問": "询问 AI", "動画": "视频", "従来のカリキュラム手順を貼り付け": "粘贴现有的课程步骤", "既存のパーマ教育マニュアルや手順書をそのまま貼り付けてください。各工程をスマートロッド版へ変換します。": "请直接粘贴现有的烫发教育手册或步骤书，各步骤将转换为 SMART ROD 版本。", "スマートロッド版に変換": "转换为 SMART ROD 版", "例：\n1. ペーパーを被せてスプレイヤーでしっかり濡らす\n2. 人差し指でペーパーと髪の毛をロッドに巻き付ける\n3. ゴムは通常の掛け方。外れやすいところはあや掛け\n...": "例：\n1. 盖上发尾纸并用喷雾器充分喷湿\n2. 用食指将发尾纸与头卷发杠绕在卷发杠上\n3. 以一般方式套橡皮筋，容易松脱处改用交叉套法\n...", "完成スタイルの写真をアップロード": "上传完成造型的照片", "なりたい完成スタイルの写真（SNS保存画像・動画フレームなど）をアップすると、スマートロッドの推定配置・サイズ・巻き方を提案します。複数枚（横・後ろ等）あると精度が上がります。": "上传想要的完成造型照片（社群媒体保存图片、视频截屏等），AI 会提出 SMART ROD 的预估配置、尺寸与卷法。提供多张（侧面、背面等）可提高准确度。", "完成スタイル写真をドラッグ、またはクリック": "将完成造型照片拖曳至此，或点击选择", "JPG / PNG・複数選択可": "JPG / PNG・可选多张", "補足情報（任意・タップで選択）": "补充信息（选填・点击）", "性別スタイル": "性别造型", "メンズ": "男性", "レディース": "女性", "レングス": "长度", "ベリーショート": "超短发", "ショート": "短发", "ミディアム": "中长发", "セミロング": "中长偏长", "ロング": "长发", "髪の状態": "发况", "バージン": "未受损发", "ダメージ（パーマ・カラー・縮毛）": "受损发（烫・染・离子烫史）", "ハイダメージ・ブリーチ": "高度受损・漂发", "ウェーブの質感": "卷度质感", "ゆるく": "柔和", "強め": "强烈", "かかり始め": "卷度起始位置", "根本": "从发根", "根本から◯cm": "距发根 ◯ 公分", "前髪": "刘海", "緩め": "柔和", "ブリーチ毛・ハイダメージ毛へのパーマは基本的に推奨しません。": "原则上不建议对漂发或高度受损发进行烫发。", "状態により結果の差が大きいため、施術の可否は毛髪診断のうえ、美容師とお客様のご相談・ご判断でお願いします（行う場合はテストカールを短めに・慎重に）。": "由于结果会因发况而有很大差异，是否施作请在发质诊断后，由发型师与顾客商议决定（若要进行，请缩短试烫时间并谨慎处理）。", "その他メモ（任意）": "其他备注（选填）", "例：外国人風の動き／顔まわりは流したい 等": "例：外国人风格的动感／脸周想要往后带", "展開図を生成（頭部マップ付き）": "产生展开图（含头部配置图）", "アドバンス（応用）巻き方の解説 ─ 波巻き・リバース・ツイストスパイラル": "高端卷法解说 ─ 波浪卷・反卷・扭转螺旋卷", "再現ハードルが高いため、これらは": "由于重现难度较高，这些卷法", "AIの自動提案には含まれません": "不包含在 AI 的自动建议中", "。自動生成された展開図の一部を、下記を参考にご自身で置き換えてアレンジしてください。": "。请参考下方说明，自行替换自动产生的展开图中的部分配置。", "波巻き": "波浪卷", "─ ロッドを上下交互に配置し、髪をS字に通して柔らかく揺れるウェーブを作る巻き方。フェミニン・韓国系スタイル向き。": "─ 将卷发杠上下交错配置，让头发呈 S 形穿过，做出柔软摇曳的波浪。适合女性风格与韩系造型。", "アレンジ例：バック上〜中間の2〜4本だけ波巻きに置き換えると表面に柔らかい揺れが出ます。スライスは薄めに、リッジの高さを揃えるのがコツ。": "应用范例：只将后脑上部到中段的 2～4 支改为波浪卷，表面就会出现柔和的律动。发片取薄一些，并让波峰高度一致是诀窍。", "リバース（逆巻き）": "反卷（逆向卷）", "─ 顔から遠ざかる方向へ回転させる巻き方。フォワード（顔向き）と交互に混ぜると、外国人風の立体的な動きになる。": "─ 朝远离脸部的方向旋转的卷法。与正卷（朝向脸部）交替搭配，能做出立体的外国人风动感。", "アレンジ例：顔まわり・サイドをフォワード⇄リバース交互に。左右の耳側で回転方向が逆になる点に注意。カバーの向きも回転方向に合わせて。": "应用范例：脸周与两侧采正卷与反卷交替。注意左右耳侧的旋转方向相反，护套的方向也要配合旋转方向。", "ツイストスパイラル（ねじり巻き）": "扭转螺旋卷（扭转卷法）", "─ 毛束をねじってから斜めに巻き、エアリーな束感・質感を出す。カジュアル・外国人風・動き重視。": "─ 先将发束扭转再斜向卷绕，做出轻盈的束感与质感。适合休闲、外国人风与重视动感的造型。", "アレンジ例：トップ〜バック上の数本のみ置き換え。ねじりの回数で質感が大きく変わるため、1本テストカールで確認してから全体へ。": "应用范例：只替换头顶到后脑上部的几支。扭转次数会大幅改变质感，请先用 1 支试烫确认后再套用到整头。", "巻き工程ムービー（線図シミュレーション）": "卷绕流程动画（线图仿真）", "「スタイル→展開図」で生成した配置、または下のプリセットを選ぶと、1本ずつの巻き工程（角度 → 毛先処理 → 挿入 → ロック → 巻き込み → ゴム固定）と、全頭の巻き順（トップ→下の段→耳周り→ネープ）をアニメーションで再生します。スタッフ教育・施術前の共有にご利用ください。": "选择在「造型→展开图」产生的配置或下方缺省范例，即可以动画播放每一支的卷绕流程（角度 → 发尾处理 → 插入 → 锁定 → 卷入 → 套橡皮筋固定）与整头的卷发顺序（头顶→下方发层→耳周→后颈）。可用于员工教育与施作前的沟通。", "📷 最新の展開図": "📷 最新展开图", "②で生成すると選べます": "在②产生后即可选择", "生成済み": "已产生", "最新の展開図": "最新展开图", "ワンカールボブ": "单卷鲍伯", "横巻き・段構成の基本形": "横向卷绕・分层配置的基本型", "ゆるウェーブボブ": "柔波鲍伯", "サイズミックスの柔らか波": "混合尺寸的柔和波浪", "メンズカールマッシュ": "男士卷度蘑菇头", "毛流れに沿う前方向配置": "顺着发流朝前配置", "メンズ強めパーマ": "男士强卷烫", "11mm主体のしっかりカール": "以 11mm 为主的扎实卷度", "ニュアンスパーマ（大きめ）": "质感烫（大卷）", "20mm以上で作る質感": "以 20mm 以上做出的质感", "フェザーパーマ（外ハネ）": "羽毛烫（外翘）", "18mm以上・毛先ワンカール": "18mm 以上・发尾单卷", "1.角度": "1.角度", "2.毛先": "2.发尾", "3.挿入": "3.插入", "4.ロック": "4.锁定", "5.巻き込み": "5.卷入", "6.根元": "6.发根", "7.ゴム": "7.橡皮筋", "▶ 再生": "▶ 播放", "⏸ 一時停止": "⏸ 暂停", "▶ もう一度": "▶ 再播放一次", "⏮ 前": "⏮ 上一支", "⏭ 次": "⏭ 下一支", "再生速度": "播放速度", "巻き順": "卷发顺序", "毛先の処理": "发尾处理", "巻き順: トップ→ネープ": "顺序：头顶→后颈", "巻き順: ネープ→トップ": "顺序：后颈→头顶", "毛先: 毛先から巻く": "发尾：从发尾开始卷", "毛先: 外す（逃がす）": "发尾：不卷入（放开）", "巻き順マップ（クリックでジャンプ）": "卷发顺序图（点击可跳到该支）", "薄い = これから ／ 濃い = 巻き済み ／ 金枠 = いま巻いている1本": "浅色＝尚未卷／深色＝已卷完／金框＝目前正在卷的这一支", "まだ配置データがありません。": "目前还没有配置数据。", "上のプリセットを選ぶか、「スタイル→展開図」タブで写真から配置を生成すると、": "请选择上方的缺省范例，或在「造型→展开图」分页用照片产生配置，", "ここで巻き順ムービーを再生できます。": "即可在此播放卷发顺序动画。", "① スライスを取り、角度 {a}° にパネルを引き出す": "① 取发片，以 {a}° 角度将发片拉出", "② 毛先を外す（先端は巻き込まずに逃がす）": "② 发尾不卷入（将末端放开不卷入）", "② 毛先を整えて、カバーのスリットに通す準備": "② 整理发尾，准备穿过护套的缝隙", "③ {m}mmロッドを毛先位置にセット（スリットに通す）": "③ 将 {m}mm 卷发杠放到发尾位置（穿过缝隙）", "④ カバーを閉じてロック — カチッ": "④ 阖上护套并锁定 — 喀嚓", "⑤ 芯が回転し、一定テンションで根元へ巻き込む": "⑤ 卷芯旋转，以均匀张力卷向发根", "⑥ 根元に到達 — 頭皮に密着させる": "⑥ 到达发根 — 紧贴头皮", "⑦ シリコンゴムを掛けて固定 — 完了": "⑦ 套上硅胶圈固定 — 完成", "🎉 全 {n} 本の巻き込みが完了しました": "🎉 全部 {n} 支都已卷完", "頭皮": "头皮", "根元": "发根", "毛先": "发尾", "毛先は外す": "发尾不卷入", "カチッ": "喀嚓", "角度": "角度", "角度{a}°": "角度 {a}°", "{a}°（頭皮基準）": "{a}°（以头皮为基准）", "巻き方": "卷法", "外す（逃がす）": "不卷入（放开）", "毛先から巻き込む": "从发尾卷入", "ねらい": "目的", "{i}本目 / 全{n}本": "第 {i} 支 / 共 {n} 支", "{i} / {n} 本 — ": "{i} / {n} 支 — ", "スマートロッド サイズ・カラー早見表": "SMART ROD 尺寸・颜色速查表", "ブルー": "蓝色", "オレンジ": "橙色", "ピンク": "粉红色", "B+ブルー": "B+蓝色", "B+グリーン": "B+绿色", "B+オレンジ": "B+橙色", "B+ピンク": "B+粉红色", "強カール": "强卷", "自然な動き": "自然动感", "ゆるめ": "偏松", "大ウェーブ": "大波浪", "ボリューム": "蓬松量感", "← 細い・カール強い": "← 细・卷度强", "太い・自然な動き →": "粗・自然动感 →", "髪の長さ × 推奨サイズ × スタイル": "发长 × 建议尺寸 × 造型", "長さ": "长度", "推奨サイズ": "建议尺寸", "スタイル例": "造型范例", "ベリーショート (3〜6cm)": "超短发 (3～6cm)", "11・14mm 中心": "以 11・14mm 为主", "メリハリ・フェード・ピンパーマ風": "俐落分明・渐层・细卷烫风格", "ショート (7〜10cm)": "短发 (7～10cm)", "11・14・16mm": "11・14・16mm", "マッシュ・毛流れ・シャドウパーマ": "蘑菇头・发流・阴影烫", "ミディアム (11〜15cm)": "中长发 (11～15cm)", "14・16・18mm": "14・16・18mm", "センターパート・スパイラル": "中分・螺旋卷", "ロング (16cm以上)": "长发 (16cm 以上)", "16・18・20mm": "16・18・20mm", "ウルフ・ミディアムウルフ・強めスパイラル": "狼尾剪・中长狼尾・强螺旋卷", "ボブ・首が見える": "波波头・露出颈部", "襟足 11〜14mm ／ 襟足より上 16mm以上": "后颈 11～14mm ／ 后颈以上 16mm 以上", "上部に11mm等は強く出過ぎるためNG": "上方使用 11mm 等会卷得过强，请避免", "ボブ・首が隠れる": "波波头・遮住颈部", "襟足 14mm以上 ／ 襟足より上 16mm以上": "后颈 14mm 以上 ／ 后颈以上 16mm 以上", "大きめの収まりウェーブ": "大波浪且服贴", "ミディアム女性 (鎖骨〜肩下)": "女性中长发 (锁骨～肩膀下)", "14〜20mm": "14～20mm", "ウェーブの大きさをサイズで調整": "以尺寸调整波浪大小", "セミロング女性 (肩下〜胸上)": "女性中长偏长发 (肩下～胸上)", "中間〜毛先の大きめウェーブ": "中段到发尾的大波浪", "ロング女性 (胸下)": "女性长发 (胸下)", "ゆるウェーブ〜動きのある大カール": "柔和波浪～动感大卷", "サイズの考え方は従来ロッドと完全に同じ。今までと同じ基準でロッドを選べます。": "尺寸的思考方式与传统卷发杠完全相同，可依照过去相同的标准选择卷发杠。", "5つの巻き方とおすすめスタイル": "5 种卷法与推荐造型", "カール": "卷度", "おすすめ": "推荐", "ヒラ巻き": "平卷", "ふんわりゆるカール": "蓬松柔和的卷度", "ナチュラル・フェミニン・抜け感": "自然・女性风・慵懒感", "スパイラル巻き": "螺旋卷", "しっかり弾むカール": "扎实弹力卷", "華やか・ゴージャス・パーティー": "华丽・奢华・派对", "ツイシー巻き": "Twisty 卷", "内+外ミックスカール": "内外混合卷", "トレンド・抜け感・こなれ感": "流行・慵懒感・随性有型", "ツイストスパイラル": "扭转螺旋卷", "ねじりエアリー": "扭转轻盈感", "カジュアル・外国人風・動き重視": "休闲・外国人风・重视动感", "柔らか揺れウェーブ": "柔软摇曳波浪", "フェミニン・ロマンティック・デート": "女性风・浪漫・约会", "従来ロッド → スマートロッド 変換表": "传统卷发杠 → SMART ROD 对照表", "従来のロッド": "传统卷发杠", "スマートロッド": "SMART ROD", "カール感": "卷度感", "従来 {x}": "传统 {x}", "ブルー（11mm）": "蓝色 (11mm)", "オレンジ（14mm）": "橙色 (14mm)", "ピンク（16mm）": "粉红色 (16mm)", "B+ブルー（18mm）": "B+蓝色 (18mm)", "B+グリーン（20mm）": "B+绿色 (20mm)", "B+オレンジ（22mm）": "B+橙色 (22mm)", "B+ピンク（24mm）": "B+粉红色 (24mm)", "スタイル・部位別 推奨サイズ": "各造型・部位的建议尺寸", "スタイル / 部位": "造型 / 部位", "ポイント": "重点", "ニュアンスパーマ": "质感烫", "20mm以上（20・22・24）": "20mm 以上 (20・22・24)", "細めではなく大きめのウェーブで質感を作る": "不用细卷，以较大的波浪做出质感", "フェザーパーマ（はねる）": "羽毛烫（外翘）", "18mm以上（18・20・22・24）": "18mm 以上 (18・20・22・24)", "毛先の外ハネを大きく柔らかく": "让发尾的外翘大而柔和", "ボブ（首が見える）": "波波头（露出颈部）", "襟足 11〜14mm": "后颈 11～14mm", "襟足より上は必ず16mm以上": "后颈以上一律使用 16mm 以上", "ボブ（首が隠れる）": "波波头（遮住颈部）", "襟足 14mm以上": "后颈 14mm 以上", "前髪（メンズ・5cm以下）": "刘海（男性・5cm 以下）", "11mm": "11mm", "短い前髪はブルーで動きを": "短刘海用蓝色做出动感", "前髪（メンズ・5cm超）": "刘海（男性・超过 5cm）", "14・16mm": "14・16mm", "自然な立ち上がりと毛流れ": "自然的立起与发流", "前髪（レディース）": "刘海（女性）", "18mm〜": "18mm 以上", "ふんわり大きく。細いロッドは強く出過ぎる": "蓬松大卷。太细的卷发杠会卷得过强", "ロッドオフ（外し方）と テストカールの基準": "卸除卷发杠的方式与试烫标准", "外す順番：": "卸除顺序：", "ネープ（襟足）から上に向かって順に外す。上から外すと、外した毛が下のロッドに絡みテンションが乱れるため。": "从后颈开始往上依序卸除。若由上方开始卸除，松开的头发会缠到下方卷发杠而打乱张力。", "テストカールの放置時間：": "试烫的停留时间：", "・傷んでいないバージン毛 ……": "・未受损的原生发 ……", "10分": "10 分钟", "・カラー / パーマ / 縮毛矯正の履歴あり（ブリーチは除く）……": "・有染发／烫发／离子烫史（不含漂发）……", "5分": "5 分钟", "・ハイダメージ・ブリーチ毛 ……": "・高度受损・漂发 ……", "基本的に推奨しません。": "原则上不建议。", "施術の可否は毛髪診断のうえ、美容師とお客様のご相談・ご判断で。": "是否施作请在发质诊断后，由发型师与顾客商议决定。", "テストカールの基準写真（サイズ別ウェーブ見本）": "试烫参考照片（各尺寸波浪范例）", "スマートロッド各サイズで巻いたときのウェーブの出方の見本。テストカール判定の参考にしてください。": "各尺寸 SMART ROD 卷出的波浪范例，请作为判断试烫结果的参考。", "写真枠": "照片位置", "11mm ブルー": "11mm 蓝色", "14mm オレンジ": "14mm 橙色", "16mm ピンク": "16mm 粉红色", "18mm B+ブルー": "18mm B+蓝色", "20mm B+グリーン": "20mm B+绿色", "22mm B+オレンジ": "22mm B+橙色", "24mm B+ピンク": "24mm B+粉红色", "{n}mm 基準写真": "{n}mm 参考照片", "逆巻きのコツは？": "反卷有什么诀窍？", "短い髪が巻けない": "短卷发杠不起来", "外国人風にするには？": "要怎么做出外国人风格？", "上巻きと逆巻きの違い": "上卷与反卷的差别", "ゴム跡が気になる": "在意橡皮筋痕迹", "ゆるいカールにしたい": "想做柔和的卷度", "スマートロッドの使い方・巻き方・サイズ選び・トラブル対処": "SMART ROD 的使用方式、卷法、尺寸选择、问题排除", "なんでも質問してください。": "欢迎随时提问。", "「逆巻きのコツは？」「短い髪が巻けない」「外国人風にするには？」": "「反卷有什么诀窍？」「短卷发杠不起来」「要怎么做出外国人风格？」", "質問を入力…": "请输入问题…", "スマートロッド公式解説動画。学習・確認用にご活用ください。": "SMART ROD 官方教学视频，可用于学习与确认。", "基本の巻き方": "基本卷法", "上巻き（基本）": "上卷（基本）", "ヒラ巻き・カバー上": "平卷・护套在上", "下巻き（基本）": "下卷（基本）", "ヒラ巻き・カバー下": "平卷・护套在下", "逆巻き": "反卷", "カバー下": "护套在下", "ゴムかけのポイント": "套橡皮筋的重点", "シリコンゴム固定": "以硅胶圈固定", "応用の巻き方": "高端卷法", "中間巻き": "中段卷法", "毛先の長さ違い対応": "应对发尾长度不一", "ツイスト巻き": "扭转卷", "波巻きパーマ": "波浪卷烫", "短い髪の巻き方": "短发的卷法", "カバーでキャッチ": "用护套抓住发丝", "解説・総合": "综合解说", "総合解説 1": "综合解说 1", "全体の流れ": "整体流程", "総合解説 2": "综合解说 2", "実演": "实际示范", "公式チャンネル": "官方频道", "全動画": "全部视频", "工程変換・サイズ推定・展開図はAIによる提案です。最終的な仕上がりは髪質・薬剤・施術者の判断により異なります。": "工序转换、尺寸推定与展开图皆为 AI 的建议。最终成果会依发质、药剂与施作者的判断而异。", "アップロードした写真は解析のためにAIサービス（Anthropic社）へ送信され、当サイトのサーバーには保存されません。お客様の顔が写った写真は、ご本人の同意を得たうえでご利用ください。": "上传的照片会发送至 AI 服务（Anthropic 公司）进行分析，不会保存在本网站的服务器。若照片中有顾客的脸，请在取得本人同意后再使用。", "変換するカリキュラムを入力してください。": "请输入要转换的课程内容。", "スマートロッド版に変換しています…": "正在转换为 SMART ROD 版…", "そのまま": "维持不变", "簡略化": "简化", "不要": "不需要", "従来": "传统", "スマートロッド版": "SMART ROD 版", "工程": "道工序", "{n}工程を削減": "减少 {n} 道工序", "巻き工程の時短": "卷绕时间缩短", "約½": "约 ½", "ワインディング時間": "卷发时间", "そのまま活きる": "可直接沿用", "簡略化される": "变简单", "不要になる": "变得不需要", "完成スタイルを解析し、頭部展開図を設計しています…": "正在分析完成造型并设计头部展开图…", "この画像は読み込めませんでした。JPGまたはPNGでお試しください（HEICは非対応です）。": "无法读取这张图片，请改用 JPG 或 PNG（不支持 HEIC）。", "推定スタイル": "预估造型", "ロッド合計": "卷发杠总数", "{n} 本": "{n} 支", "{n}本": "{n} 支", "{n}サイズ使用": "使用 {n} 种尺寸", "解析確度": "分析可信度", "高": "高", "中": "中", "低": "低", "頭部展開図（上面ビュー）": "头部展开图（俯视）", "頭部展開図（上面）": "头部展开图（俯视）", "お客様を正面から見た配置（図の左＝お客様の右サイド）": "从顾客正面看到的配置（图左＝顾客的右侧）", "▶ 巻きムービーで再生": "▶ 以卷法动画播放", "📋 テキストをコピー": "📋 拷贝文本", "✓ コピーしました": "✓ 已拷贝", "部位ごとのロッド配置": "各部位的卷发杠配置", "使用ロッド": "使用卷发杠", "カールの狙い": "卷度目的", "必要なスマートロッド（集計）": "所需 SMART ROD（合计）", "サイズ・カラー": "尺寸・颜色", "本数": "数量", "毛先コントロール:": "发尾控制：", "確度: ": "可信度：", " この設計はたたき台です。最終調整は施術者が行ってください。": " 此设计仅为初稿，最终调整请由施作者进行。", "前頭部": "前头部", "トップ": "头顶", "右サイド": "右侧", "左サイド": "左侧", "バック上": "后脑上部", "バック下": "后脑下部", "襟足": "后颈", "ワンカール": "单卷", "ワンカール（下巻き・外ハネ）": "单卷（下卷・外翘）", "展開図": "展开图", "■ {s} 展開図 — {h}": "■ {s} 展开图 — {h}", "{p}: {r}({mm}mm) × {c}本 [{w}]": "{p}：{r} ({mm}mm) × {c} 支 [{w}]", "本日の写真解析 残り{p}回": "今日剩余照片分析次数：{p} 次", "本日の写真解析の無料回数に達しました。明日またお試しください。": "今日的免费照片分析次数已用完，请明天再试。", "本日のAI変換・質問の無料回数に達しました。明日またお試しください。": "今日的 AI 转换与提问免费次数已用完，请明天再试。", "ただいまアクセスが集中しています。しばらくしてからお試しください。": "目前使用人数较多，请稍后再试。", "AIが一時的に応答できませんでした。少し待ってからもう一度お試しください。": "AI 暂时无法回应，请稍候再试一次。", "時間内に解析が終わりませんでした。写真の枚数を減らして（1〜2枚）、もう一度お試しください。": "分析未能在时间内完成，请减少照片张数（1～2 张）后再试一次。", "入力内容を確認してください。": "请确认输入内容。", "入力が長すぎます。短くしてお試しください。": "输入内容过长，请缩短后再试。", "通信に失敗しました。ネットワークをご確認ください。": "连接失败，请确认网络状态。", "AI応答からJSONを抽出できませんでした。もう一度お試しください。": "无法解读 AI 的回应，请再试一次。", "AI応答が途中で切れた可能性があります。入力を分割して再実行してください。": "AI 的回应可能被截断，请将输入内容分段后重新运行。", "画像の枚数・サイズが大きすぎます。枚数を減らしてお試しください。": "照片张数过多或文件过大，请减少张数后再试。", "利用規約に反する可能性があるため処理できませんでした。": "因可能违反使用规范而无法处理。", "スタイル情報を読み取れませんでした": "无法读取造型信息", "図に配置できなかった部位: {x}": "无法放到图上的部位：{x}", "この配置データは図に割り当てられませんでした。": "这份配置数据无法对应到图上。", "部位名（トップ／バック上／襟足 など）をご確認ください。": "请确认部位名称（头顶／后脑上部／后颈 等）。", "毛先コントロール: {x}": "发尾控制：{x}", "注意: {x}": "注意：{x}", "⚠️ {x}": "⚠️ {x}", "{i} / {n} 本 — {r}": "{i} / {n} 支 — {r}", "1本": "1 支", "1 本": "1 支", "本": "支", "写真は最大3枚までです。": "最多可上传 3 张照片。", "ご購入・お問い合わせ": "购买・洽询", "面を残して大きくワンカール": "保留表面，卷出一个大单卷", "中間のつなぎ": "衔接中段", "耳周りは自然に流す": "耳周自然带过", "締めて収まり良く": "收紧让整体服贴", "根元ふんわり": "发根蓬松", "大きな揺れ": "大幅度的摇曳感", "波のつなぎ": "衔接波浪", "顔まわり柔らかく": "脸周柔和", "首元は細かく締める": "颈部周围卷细一点收紧", "前方向の毛流れ・動き": "朝前的发流与动感", "前髪は抜け感": "刘海呈现慵懒感", "つむじ周りに動き": "旋周带出动感", "耳周りタイト": "耳周收紧", "えり足を締める": "收紧后颈", "しっかりリッジ": "做出明确的波峰", "前髪も同調": "刘海同步呼应", "後頭部に丸み": "后脑呈现圆弧", "えり上も均一": "后颈上方也保持均匀", "サイドタイト": "两侧收紧", "締める": "收紧", "大きめのゆるい動き": "大而柔和的动感", "前髪はふんわり": "刘海蓬松柔和", "つむじ周りに柔らかい動き": "旋周带出柔和动感", "耳周りは自然に": "耳周保持自然", "面を残して毛先だけ外へ": "保留表面，只让发尾外翘", "ハネの主役": "外翘的主角", "サイドも同調して外へ": "两侧同步外翘", "えり足からしっかりハネ上げ": "从后颈确实向上翘起"}};
+const LANG_CODES = ["ja", "en", "zh-TW", "zh-CN"];
+const HTML_LANG = { "ja": "ja", "en": "en", "zh-TW": "zh-Hant", "zh-CN": "zh-Hans" };
+function detectLang() {
+  try { const q = new URLSearchParams(location.search).get("lang"); if (q && LANG_CODES.indexOf(q) >= 0) return q; } catch (e) {}
+  try { const s = localStorage.getItem("sr_lang"); if (s && LANG_CODES.indexOf(s) >= 0) return s; } catch (e) {}
+  const n = String(navigator.language || "en").toLowerCase();
+  if (n.indexOf("ja") === 0) return "ja";
+  if (n.indexOf("zh") === 0) return /tw|hk|mo|hant/.test(n) ? "zh-TW" : "zh-CN";
+  return "en";
+}
+let LANG = detectLang();
+const JP_RE = /[぀-ヿ一-鿿]/;
+const NORM = s => String(s).trim().replace(/[ \t\r\n\f\v]+/g, " ");
+const NUMVARS = { n:1, i:1, a:1, m:1, mm:1, c:1, p:0 };
+const EXACT = new Map(), TPL = [], TCACHE = new Map();
+function buildIndex() {
+  EXACT.clear(); TPL.length = 0; TCACHE.clear();
+  const d = I18N_DICT[LANG]; if (!d) return;
+  for (const k in d) {
+    const nk = NORM(k);
+    if (/\{\w+\}/.test(nk)) {
+      const names = [];
+      let src = nk.replace(/[.*+?^$()|[\]\\]/g, "\\$&");
+      src = src.replace(/\{(\w+)\}/g, (m, nm) => { names.push(nm); return NUMVARS[nm] ? "(\\d+)" : "(.+?)"; });
+      TPL.push({ re: new RegExp("^" + src + "$"), names: names, out: d[k], len: nk.length });
+    } else EXACT.set(nk, d[k]);
+  }
+  TPL.sort((a, b) => b.len - a.len);
+}
+function trAny(s, depth) {
+  depth = depth || 0;
+  const n = NORM(s); if (!n) return null;
+  if (EXACT.has(n)) return EXACT.get(n);
+  if (TCACHE.has(n)) return TCACHE.get(n);
+  let out = null;
+  for (const t of TPL) {
+    const m = n.match(t.re);
+    if (m) {
+      out = t.out.replace(/\{(\w+)\}/g, (x, nm) => {
+        const v = m[t.names.indexOf(nm) + 1];
+        if (v === undefined) return x;
+        const tv = depth < 4 ? trAny(v, depth + 1) : null;
+        return tv !== null ? tv : v;
+      });
+      break;
+    }
+  }
+  if (out === null && depth < 4) {
+    const m = n.match(/^(.+?) (\d+)mm$/);
+    if (m) { const a = trAny(m[1], depth + 1); if (a !== null) out = a + " " + m[2] + "mm"; }
+    if (out === null) {
+      for (const sep of ["　", " ・ ", " / ", "／", "・"]) {
+        if (n.indexOf(sep) < 0) continue;
+        const parts = n.split(sep).map(p => trAny(p, depth + 1));
+        if (parts.every(p => p !== null)) { out = parts.join(sep === "　" ? "  " : sep); break; }
+      }
+    }
+  }
+  TCACHE.set(n, out);
+  return out;
+}
+function tr(s) { if (LANG === "ja") return s; const o = trAny(s); return o === null ? s : o; }
+function trNode(n) {
+  if (n.__ja === undefined) n.__ja = n.nodeValue;
+  const raw = n.__ja;
+  if (LANG === "ja" || !JP_RE.test(raw)) { if (n.nodeValue !== raw) n.nodeValue = raw; return; }
+  const lines = raw.split("\n").filter(l => l.trim());
+  if (lines.length > 1) {
+    let any = false;
+    const res = raw.split("\n").map(l => {
+      if (!l.trim()) return l;
+      const t = trAny(l); if (t === null) return l;
+      any = true; return (l.match(/^\s*/)[0]) + t;
+    });
+    n.nodeValue = any ? res.join("\n") : raw; return;
+  }
+  const out = trAny(raw);
+  if (out === null) { n.nodeValue = raw; return; }
+  const lead = raw.match(/^\s*/)[0], trail = raw.match(/\s*$/)[0];
+  n.nodeValue = (/^\s/.test(out) ? "" : lead) + out + (/\s$/.test(out) ? "" : trail);
+}
+function trAttrs(el) {
+  ["placeholder", "title", "alt"].forEach(a => {
+    if (!el.hasAttribute || !el.hasAttribute(a)) return;
+    const key = "__ja_" + a;
+    if (el[key] === undefined) el[key] = el.getAttribute(a);
+    const raw = el[key];
+    let out = raw;
+    if (LANG !== "ja" && JP_RE.test(raw)) { const t = trAny(raw); if (t !== null) out = t; }
+    if (el.getAttribute(a) !== out) el.setAttribute(a, out);
+  });
+}
+function processTree(root) {
+  if (!root) return;
+  if (root.nodeType === 3) { if (!(root.parentNode && root.parentNode.closest && root.parentNode.closest("[data-noi18n]"))) trNode(root); return; }
+  if (root.nodeType !== 1) return;
+  if (root.closest && root.closest("[data-noi18n]")) return;
+  const w = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT, {
+    acceptNode: n => {
+      if (n.nodeType === 1) {
+        const t = n.nodeName;
+        if (t === "SCRIPT" || t === "STYLE" || t === "TEXTAREA" || n.hasAttribute("data-noi18n")) return NodeFilter.FILTER_REJECT;
+        return NodeFilter.FILTER_SKIP;
+      }
+      return NodeFilter.FILTER_ACCEPT;
+    }
+  });
+  const nodes = []; while (w.nextNode()) nodes.push(w.currentNode);
+  nodes.forEach(trNode);
+  trAttrs(root);
+  root.querySelectorAll("[placeholder],[title],[alt]").forEach(trAttrs);
+}
+function setLang(l, init) {
+  if (LANG_CODES.indexOf(l) < 0) l = "ja";
+  LANG = l; buildIndex();
+  try { localStorage.setItem("sr_lang", l); } catch (e) {}
+  document.documentElement.lang = HTML_LANG[l];
+  document.querySelectorAll("#lang-switch button").forEach(b => b.classList.toggle("on", b.dataset.lang === l));
+  processTree(document.body);
+  if (!init) { try { const u = new URL(location.href); u.searchParams.set("lang", l); history.replaceState(null, "", u); } catch (e) {} }
+}
+buildIndex();
+document.addEventListener("click", e => { const b = e.target.closest && e.target.closest("#lang-switch button"); if (b) setLang(b.dataset.lang); });
+new MutationObserver(muts => {
+  if (LANG === "ja") return;
+  for (const m of muts) m.addedNodes.forEach(processTree);
+}).observe(document.body, { childList: true, subtree: true });
+
+// ═══════════════════════════════
+// AI 呼び出し（サーバー経由: /api/claude）— ブラウザにAPIキーは不要
+// ═══════════════════════════════
+function updateBanner(photoLeft) {
+  const t = document.getElementById("api-banner-text");
+  if (t && typeof photoLeft === "number") t.textContent = "本日の写真解析 残り" + photoLeft + "回";
+}
+const API_ERR = {
+  rate_photo: "本日の写真解析の無料回数に達しました。明日またお試しください。",
+  rate_text: "本日のAI変換・質問の無料回数に達しました。明日またお試しください。",
+  rate_global: "ただいまアクセスが集中しています。しばらくしてからお試しください。",
+  upstream: "AIが一時的に応答できませんでした。少し待ってからもう一度お試しください。",
+  timeout: "時間内に解析が終わりませんでした。写真の枚数を減らして（1〜2枚）、もう一度お試しください。",
+  bad_request: "入力内容を確認してください。",
+  too_long: "入力が長すぎます。短くしてお試しください。",
+  too_large: "画像の枚数・サイズが大きすぎます。枚数を減らしてお試しください。",
+};
+async function callApi(task, payload) {
+  let res;
+  try {
+    res = await fetch("/api/claude", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(Object.assign({ task: task, lang: LANG }, payload))
+    });
+  } catch (e) { throw new Error("通信に失敗しました。ネットワークをご確認ください。"); }
+  let data = null;
+  try { data = await res.json(); } catch (e) {}
+  if (!res.ok || !data || data.error || !data.text) {
+    const code = data && data.error;
+    throw new Error(API_ERR[code] || (res.status === 429 ? API_ERR.rate_global : API_ERR.upstream));
+  }
+  if (data.remaining && typeof data.remaining.photo === "number") updateBanner(data.remaining.photo);
+  return data.text;
+}
+
+// [FIX M-5] extractJSONを堅牢化 + 日本語エラーメッセージ
+function extractJSON(raw) {
+  let s = String(raw).replace(/```json/gi,"").replace(/```/g,"").trim();
+  const a = s.indexOf("{"), b = s.lastIndexOf("}");
+  if (a === -1 || b === -1 || b <= a) throw new Error("AI応答からJSONを抽出できませんでした。もう一度お試しください。");
+  try { return JSON.parse(s.slice(a, b + 1)); }
+  catch { throw new Error("AI応答が途中で切れた可能性があります。入力を分割して再実行してください。"); }
+}
+
+// ═══════════════════════════════
+// タブ切り替え
+// ═══════════════════════════════
+document.querySelectorAll(".tab").forEach(t => {
+  t.onclick = () => {
+    document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
+    document.querySelectorAll(".panel").forEach(x => x.classList.remove("active"));
+    t.classList.add("active");
+    document.getElementById("panel-" + t.dataset.tab).classList.add("active");
+  };
+});
+
+// ═══════════════════════════════
+// サイズ早見表レンダリング
+// ═══════════════════════════════
+(function renderGuide() {
+  document.getElementById("rod-ladder").innerHTML = ROD_LINEUP.map(r => `
+    <div class="rod">
+      <div class="rod-bar" style="height:${r.h}px; background:${r.hex}; ${r.base==="黒"?"border:2.5px solid #2a2a2a;":""}"></div>
+      <div class="rod-mm">${r.mm}mm</div>
+      <div class="rod-name">${r.name}</div>
+      <div class="rod-use">${r.curl}</div>
+    </div>`).join("");
+  document.getElementById("length-table").innerHTML = LENGTH_MAP.map(([a,b,c]) =>
+    `<tr><td style="font-weight:700">${a}</td><td style="color:#FFB800;font-weight:700">${b}</td><td style="color:var(--ink-soft)">${c}</td></tr>`).join("");
+  document.getElementById("winding-table").innerHTML = WINDING_MAP.map(([a,b,c]) =>
+    `<tr><td style="font-weight:700">${a}</td><td style="color:var(--ink-soft)">${b}</td><td style="color:var(--ink-soft)">${c}</td></tr>`).join("");
+  // [v4.3] 従来ロッド変換表
+  document.getElementById("conv-table").innerHTML = CONV_MAP.map(([old, mm]) => {
+    const r = ROD_LINEUP.find(x => x.mm === mm);
+    return `<tr><td style="font-weight:700">従来 ${old}</td><td><span class="conv-eq"><span class="sw2" style="background:${r.hex};${r.base==="黒"?"border:2px solid #2a2a2a;":""}"></span>${r.name}（${r.mm}mm）</span></td><td style="color:var(--ink-soft)">${r.curl}</td></tr>`;
+  }).join("");
+  // [v4.3] スタイル別サイズルール
+  document.getElementById("style-size-table").innerHTML = STYLE_SIZE_MAP.map(([a,b,c]) =>
+    `<tr><td style="font-weight:700">${a}</td><td style="color:#FFB800;font-weight:700">${b}</td><td style="color:var(--ink-soft)">${c}</td></tr>`).join("");
+  // [v4.3] テストカール基準写真（img/testcurl_◯◯.jpg があれば自動表示）
+  document.getElementById("tc-grid").innerHTML = ROD_LINEUP.map(r => `
+    <div class="tc-cell">
+      <img src="img/testcurl_${r.mm}.jpg" alt="${r.mm}mm 基準写真" onload="this.parentNode.classList.add('hasimg')">
+      <div class="tc-ph"><span style="width:12px;height:22px;border-radius:4px;background:${r.hex};${r.base==="黒"?"border:2px solid #2a2a2a;":""}"></span>写真枠</div>
+      <div class="tc-cap">${r.mm}mm ${r.name}</div>
+    </div>`).join("");
+})();
+
+// ═══════════════════════════════
+// 動画ライブラリレンダリング
+// ═══════════════════════════════
+(function renderVideos() {
+  const playIcon = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
+  let html = "";
+  for (const [section, vids] of Object.entries(VIDEO_LIBRARY)) {
+    html += `<div class="vid-section"><h3>${section}</h3><div class="vid-grid">`;
+    html += vids.map(v => `
+      <a class="vid-card" href="${v.url}" target="_blank" rel="noopener">
+        <div class="vid-icon">${playIcon}</div>
+        <div><div class="vid-label">${v.label}</div><div class="vid-tag">${v.tag}</div></div>
+      </a>`).join("");
+    html += `</div></div>`;
+  }
+  document.getElementById("video-library").innerHTML = html;
+})();
+
+// ═══════════════════════════════
+// カリキュラム変換
+// ═══════════════════════════════
+document.getElementById("convert-btn").onclick = async () => {
+  const btn = document.getElementById("convert-btn"); // [FIX M-1] 多重送信防止
+  const input = document.getElementById("curriculum-input").value.trim();
+  const out = document.getElementById("convert-result");
+  if (!input) { out.innerHTML = '<div class="err">変換するカリキュラムを入力してください。</div>'; return; }
+  btn.disabled = true;
+  out.innerHTML = '<div class="loading"><div class="spinner"></div>スマートロッド版に変換しています…</div>';
+
+
+  try {
+    const raw = await callApi("convert", { text: input });
+    const d = extractJSON(raw);
+    const tagJp = { keep:"そのまま", simplify:"簡略化", remove:"不要" };
+    const CATS = new Set(["keep","simplify","remove"]); // [FIX M-4] カテゴリ検証
+    const cards = d.steps.map(s => {
+      const cat = CATS.has(s.category) ? s.category : "simplify";
+      return `
+      <div class="conv-card ${cat}">
+        <div class="conv-head"><span class="conv-step">${esc(s.title)}</span><span class="conv-tag ${cat}">${tagJp[cat]}</span></div>
+        <div class="conv-body">
+          <div><div class="conv-col-label">従来</div><div class="conv-old">${esc(s.original)}</div></div>
+          <div><div class="conv-col-label">スマートロッド版</div><div class="conv-new">${esc(s.smartrod)}</div></div>
+        </div>
+      </div>`;
+    }).join("");
+    const origSteps = Number(d.originalSteps) || 0; // [FIX M-4] 数値の強制型変換
+    const convSteps = Number(d.convertedSteps) || 0;
+    const removedCount = Number(d.removedCount) || 0;
+    out.innerHTML = `
+      <div class="stats">
+        <div class="stat"><div class="stat-label">従来</div><div class="stat-num">${origSteps}<span class="unit"> 工程</span></div></div>
+        <div class="stat keep accent"><div class="stat-label">スマートロッド版</div><div class="stat-num keep">${convSteps}<span class="unit"> 工程</span></div><div class="stat-foot">${removedCount}工程を削減</div></div>
+        <div class="stat accent"><div class="stat-label">巻き工程の時短</div><div class="stat-num simplify">約½</div><div class="stat-foot">ワインディング時間</div></div>
+      </div>
+      <div class="legend">
+        <span class="lg keep"><span class="dot" style="background:var(--keep)"></span>そのまま活きる</span>
+        <span class="lg simplify"><span class="dot" style="background:var(--simplify)"></span>簡略化される</span>
+        <span class="lg remove"><span class="dot" style="background:var(--remove)"></span>不要になる</span>
+      </div>
+      ${cards}
+      <div class="note-box info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg><span>${esc(d.summary)}</span></div>`;
+  } catch(e) {
+    out.innerHTML = '<div class="err">' + esc(e.message) + '</div>';
+  } finally {
+    btn.disabled = false; // [FIX M-1]
+  }
+};
+
+// ═══════════════════════════════
+// 写真アップロード
+// ═══════════════════════════════
+const drop = document.getElementById("drop");
+const fileInput = document.getElementById("file-input");
+const previewWrap = document.getElementById("preview-wrap");
+const analyzeBtn = document.getElementById("analyze-btn");
+let images = [];
+
+drop.onclick = () => fileInput.click();
+drop.ondragover = e => { e.preventDefault(); drop.classList.add("over"); };
+drop.ondragleave = () => drop.classList.remove("over");
+drop.ondrop = e => { e.preventDefault(); drop.classList.remove("over"); handleFiles(e.dataTransfer.files); };
+fileInput.onchange = e => handleFiles(e.target.files);
+
+// [FIX M-3] 画像圧縮（1568px・JPEG）+ 削除ボタン付きプレビュー
+async function compressImage(file, maxEdge = 1280, quality = 0.8) {
+  const bitmap = await createImageBitmap(file);
+  const scale = Math.min(1, maxEdge / Math.max(bitmap.width, bitmap.height));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(bitmap.width * scale);
+  canvas.height = Math.round(bitmap.height * scale);
+  canvas.getContext("2d").drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  const dataUrl = canvas.toDataURL("image/jpeg", quality);
+  return { mime: "image/jpeg", data: dataUrl.split(",")[1], dataUrl };
+}
+
+async function handleFiles(files) {
+  for (const file of files) {
+    if (!file.type.startsWith("image/")) continue;
+    if (images.filter(Boolean).length >= 3) { alert(tr("写真は最大3枚までです。")); break; }
+    try {
+      const img = await compressImage(file);
+      const idx = images.push(img) - 1;
+      const wrap = document.createElement("div");
+      wrap.style.position = "relative";
+      wrap.style.display = "inline-block";
+      wrap.innerHTML = `<img src="${img.dataUrl}" class="preview-img">
+        <button type="button" style="position:absolute;top:4px;right:4px;width:22px;height:22px;border:none;border-radius:50%;background:rgba(0,0,0,.65);color:#fff;cursor:pointer;font-size:13px;line-height:1;display:flex;align-items:center;justify-content:center;">×</button>`;
+      wrap.querySelector("button").onclick = () => {
+        images[idx] = null;
+        wrap.remove();
+        if (!images.some(Boolean)) analyzeBtn.style.display = "none";
+      };
+      previewWrap.appendChild(wrap);
+      analyzeBtn.style.display = "flex";
+    } catch(e) {
+      alert(tr("この画像は読み込めませんでした。JPGまたはPNGでお試しください（HEICは非対応です）。"));
+    }
+  }
+}
+
+// ═══════════════════════════════
+// [v4.3] 補足情報セレクタ
+// ═══════════════════════════════
+const styleSel = { gender:null, length:null, condition:null, wave:null, start:null, cm:"", bangs:null };
+document.getElementById("style-sel").addEventListener("click", e => {
+  const b = e.target.closest(".selbtn"); if (!b) return;
+  const grp = b.parentNode, key = grp.dataset.key, wasOn = b.classList.contains("on");
+  grp.querySelectorAll(".selbtn").forEach(x => x.classList.remove("on"));
+  styleSel[key] = wasOn ? null : b.dataset.v;
+  if (!wasOn) b.classList.add("on");
+  document.getElementById("cm-wrap").style.display = styleSel.start === "cm" ? "inline-flex" : "none";
+  document.getElementById("bleach-warn").style.display = (styleSel.condition || "").includes("ブリーチ") ? "flex" : "none";
+});
+document.getElementById("start-cm").oninput = e => { styleSel.cm = e.target.value; };
+function buildSelText() {
+  const s = [];
+  if (styleSel.gender)    s.push(styleSel.gender);
+  if (styleSel.length)    s.push("レングス:" + styleSel.length);
+  if (styleSel.condition) s.push("髪の状態:" + styleSel.condition);
+  if (styleSel.wave)      s.push("ウェーブの質感:" + styleSel.wave);
+  if (styleSel.start === "根本")    s.push("かかり始め:根本から");
+  else if (styleSel.start === "cm") s.push("かかり始め:根本から" + (styleSel.cm || "数") + "cm");
+  if (styleSel.bangs)     s.push("前髪:" + styleSel.bangs);
+  return s.length ? " 指定条件（写真より優先）:" + s.join("／") + "。" : "";
+}
+
+// ═══════════════════════════════
+// 展開図生成 + SVG頭部マップ
+// ═══════════════════════════════
+analyzeBtn.onclick = async () => {
+  const out = document.getElementById("style-result");
+  if (!images.length) return;
+  analyzeBtn.disabled = true; // [FIX M-1] 多重送信防止
+  const note = document.getElementById("style-note").value.trim();
+  const selText = buildSelText(); // [v4.3]
+  out.innerHTML = '<div class="loading"><div class="spinner"></div>完成スタイルを解析し、頭部展開図を設計しています…</div>';
+
+
+  try {
+    const imgs = images.filter(Boolean).map(im => ({ mime: im.mime, data: im.data })); // [FIX M-3] 削除済み画像を除外
+    const raw = await callApi("analyze", { images: imgs, selText: selText, note: note });
+    const d = extractJSON(raw);
+    renderStyleResult(d);
+  } catch(e) {
+    out.innerHTML = '<div class="err">' + esc(e.message) + '</div>';
+  } finally {
+    analyzeBtn.disabled = false; // [FIX M-1]
+  }
+};
+
+// [FIX S-2] B+系ロッドの誤色バグ修正: mm優先で特定
+function rodInfo(mm, name) {
+  const byMm = ROD_LINEUP.find(x => x.mm === Number(mm));
+  if (byMm) return byMm;
+  if (name) {
+    const sorted = ROD_LINEUP.slice().sort((a, b) => b.name.length - a.name.length);
+    const byName = sorted.find(x => name.includes(x.name));
+    if (byName) return byName;
+  }
+  return null;
+}
+function rodHex(name, mm) {
+  const r = rodInfo(mm, name);
+  return r ? r.hex : "#aaa";
+}
+function rodIsBlack(mm) { return mm >= 18; }
+
+// ─── SVG頭部マップ生成 ───
+// [FIX S-3] angle追加（サイドは縦巻き表現）
+const ZONE_MAP = {
+  "前頭部":   { cx:240, cy:110, rx:60, ry:28, angle:0 },
+  "トップ":   { cx:240, cy:175, rx:55, ry:30, angle:0 },
+  "右サイド": { cx:145, cy:210, rx:45, ry:22, angle:90 },
+  "左サイド": { cx:335, cy:210, rx:45, ry:22, angle:90 },
+  "バック上": { cx:240, cy:255, rx:55, ry:28, angle:0 },
+  "バック下": { cx:240, cy:315, rx:50, ry:26, angle:0 },
+  "襟足":     { cx:240, cy:365, rx:45, ry:22, angle:0 },
+};
+
+// [FIX S-2/S-3 + 2-3] buildHeadSVG全置換版
+// mm比例の太さ・カプセル形状・段組・mmラベル白フチ・未配置警告・向き注記
+function buildHeadSVG(placements) {
+  const w = 480, h = 460;
+  const unplaced = [];
+  const usedZones = {};
+  const zoneTotal = {};
+
+  const resolved = [];
+  placements.forEach(p => {
+    const z = findZone(p.position);
+    if (!z) { unplaced.push(p); return; }
+    const row = zoneTotal[z.name] || 0;
+    zoneTotal[z.name] = row + 1;
+    if (!usedZones[z.name]) usedZones[z.name] = rodHex(p.smartrodName, p.smartrodMm);
+    resolved.push({ p, z, row });
+  });
+
+  let svg = `<svg id="head-diagram" viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="headGrad" cx="50%" cy="40%">
+      <stop offset="0%" stop-color="#f9f5f0"/>
+      <stop offset="100%" stop-color="#ede8e2"/>
+    </radialGradient>
+  </defs>
+  <ellipse cx="240" cy="220" rx="155" ry="185" fill="url(#headGrad)" stroke="#c8c0b8" stroke-width="2"/>
+  <ellipse cx="87" cy="220" rx="18" ry="28" fill="#ede8e2" stroke="#c8c0b8" stroke-width="1.5"/>
+  <ellipse cx="393" cy="220" rx="18" ry="28" fill="#ede8e2" stroke="#c8c0b8" stroke-width="1.5"/>
+  <ellipse cx="240" cy="118" rx="110" ry="88" fill="#f5f0eb" stroke="#c8c0b8" stroke-width="1" stroke-dasharray="4,3"/>`;
+
+  for (const [zoneName, tint] of Object.entries(usedZones)) {
+    const z = ZONE_MAP[zoneName];
+    svg += `\n  <ellipse cx="${z.cx}" cy="${z.cy}" rx="${z.rx + 4}" ry="${z.ry + 4}" fill="${tint}" opacity="0.10"/>`;
+  }
+  for (const [zone, z] of Object.entries(ZONE_MAP)) {
+    svg += `\n  <ellipse cx="${z.cx}" cy="${z.cy}" rx="${z.rx}" ry="${z.ry}" fill="none" stroke="#ddd8d0" stroke-width="1" stroke-dasharray="3,3"/>`;
+    svg += `\n  <text x="${z.cx}" y="${z.cy + 4}" text-anchor="middle" font-size="9" fill="#b0a898" font-family="sans-serif">${zone}</text>`;
+  }
+
+  resolved.forEach(({ p, z, row }) => {
+    const rod = rodInfo(p.smartrodMm, p.smartrodName);
+    const col = rod ? rod.hex : "#aaa";
+    const isBlack = rod ? rod.base === "黒" : false;
+    const count = Math.max(1, Number(p.count) || 1);
+    const n = Math.min(count, 8);
+    const totalRows = zoneTotal[z.name];
+    const rodW = Math.max(5, Math.min(15, (Number(p.smartrodMm) || 14) * 0.55));
+    const rodH = Math.min(totalRows > 1 ? 14 : 20, z.ry * 0.95);
+    const spacing = Math.max(rodW + 2, (z.rx * 1.7) / n);
+    const x0 = z.cx - ((n - 1) * spacing) / 2;
+    const rowOffset = (row - (totalRows - 1) / 2) * (rodH + 5);
+
+    let g = `\n  <g transform="rotate(${z.angle || 0} ${z.cx} ${z.cy})">`;
+    for (let i = 0; i < n; i++) {
+      const x = x0 + i * spacing - rodW / 2;
+      const y = z.cy - rodH / 2 + rowOffset;
+      g += `\n    <rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${rodW.toFixed(1)}" height="${rodH.toFixed(1)}" rx="${(rodW/2).toFixed(1)}" fill="${col}" ${isBlack ? 'stroke="#2a2a2a" stroke-width="1.6"' : 'stroke="rgba(0,0,0,.18)" stroke-width="1"'}><title>${esc(p.position)}: ${esc(p.smartrodName)} ${Number(p.smartrodMm)||"?"}mm ×${count}本 [${esc(p.windingType||"")}]</title></rect>`;
+    }
+    g += `\n  </g>`;
+    svg += g;
+
+    const labelY = z.cy + rowOffset + 3.5;
+    svg += `\n  <text x="${z.cx}" y="${labelY.toFixed(1)}" text-anchor="middle" font-size="10" font-weight="800" font-family="sans-serif" fill="#1a1a2e" paint-order="stroke" stroke="#ffffff" stroke-width="3" stroke-linejoin="round">${Number(p.smartrodMm)||"?"}mm×${count}</text>`;
+  });
+
+  if (unplaced.length) {
+    svg += `\n  <text x="${w/2}" y="${h-22}" text-anchor="middle" font-size="9.5" fill="#d4537e" font-family="sans-serif">図に配置できなかった部位: ${unplaced.map(u => esc(u.position)).join("、")}（下の一覧で確認）</text>`;
+  }
+
+  svg += `\n  <text x="${w/2}" y="28" text-anchor="middle" font-size="13" font-weight="700" fill="#1a1a2e" font-family="sans-serif">頭部展開図（上面）</text>`;
+  svg += `\n  <text x="${w/2}" y="43" text-anchor="middle" font-size="9.5" fill="#9a9aae" font-family="sans-serif">お客様を正面から見た配置（図の左＝お客様の右サイド）</text>`;
+  svg += `\n  <text x="${w/2}" y="57" text-anchor="middle" font-size="10" fill="#9a9aae" font-family="sans-serif">前頭部</text>`;
+  svg += `\n  <text x="${w/2}" y="${h-8}" text-anchor="middle" font-size="10" fill="#9a9aae" font-family="sans-serif">襟足</text>`;
+  svg += `\n</svg>`;
+  return svg;
+}
+
+// [FIX S-3] 「具体語→汎用語」の順で評価（バック下がバック上に誤配置されるバグ修正）
+const ZONE_ALIASES = [
+  ["襟足",     ["襟足", "ネープ", "うなじ", "nape", "后颈", "後頸", "颈后"]],
+  ["バック下", ["バック下", "後頭部下", "lower back", "后脑下", "後腦下"]],
+  ["バック上", ["バック上", "後頭部上", "upper back", "后脑上", "後腦上"]],
+  ["右サイド", ["右サイド", "right side", "右侧", "右側", "右耳", "右フロントサイド", "右こめかみ", "右もみあげ", "右生え際", "右の生え際", "右顔まわり"]],
+  ["左サイド", ["左サイド", "left side", "左侧", "左側", "左耳", "左フロントサイド", "左こめかみ", "左もみあげ", "左生え際", "左の生え際", "左顔まわり"]],
+  ["前頭部",   ["前頭部", "front", "hairline", "前额", "前頭", "前头", "フロント", "前髪", "生え際", "こめかみ", "顔まわり", "フェイスライン", "もみあげ"]],
+  ["トップ",   ["トップ", "頭頂", "top", "crown", "头顶"]],
+  ["バック下", ["後頭部"]],
+  ["バック上", ["バック", "back", "后脑", "後腦"]],
+];
+
+function findZone(position) {
+  if (!position) return null;
+  for (const [zoneName, keys] of ZONE_ALIASES) {
+    if (keys.some(k => String(position).toLowerCase().includes(k.toLowerCase()))) {
+      return { name: zoneName, ...ZONE_MAP[zoneName] };
+    }
+  }
+  return null;
+}
+
+// 共有テキスト生成
+function buildShareText(d) {
+  const lines = [`■ ${d.styleName} 展開図 — ${d.hairLength}`,""];
+  d.placements.forEach(p => {
+    lines.push(`${p.position}: ${p.smartrodName}(${p.smartrodMm}mm) × ${p.count}本 [${p.windingType}]`);
+    if (p.curlNote) lines.push(`  → ${p.curlNote}`);
+  });
+  lines.push("","毛先コントロール: " + d.fingerTechnique);
+  lines.push("注意: " + d.advice);
+  return lines.join("\n");
+}
+
+function renderStyleResult(d) {
+  const out = document.getElementById("style-result");
+  window.SR_LAST_PLAN = d; // [v4] 巻きムービー連携用に保持
+  const confJp = { high:"高", medium:"中", low:"低" };
+
+  // 集計
+  const agg = {};
+  d.placements.forEach(p => {
+    const k = p.smartrodName + "|" + p.smartrodMm;
+    if (!agg[k]) agg[k] = { name:p.smartrodName, mm:p.smartrodMm, count:0 };
+    agg[k].count += p.count;
+  });
+
+  const aggRows = Object.values(agg).map(a => `
+    <tr>
+      <td><span class="sw" style="background:${rodHex(a.name, a.mm)};${rodIsBlack(a.mm)?"border:1.5px solid #2a2a2a;":""}"></span>${esc(a.name)} ${a.mm}mm</td>
+      <td class="ta-r" style="font-weight:700">${a.count} 本</td>
+    </tr>`).join("");
+
+  const totalRods = d.placements.reduce((s,p) => s + p.count, 0);
+
+  const cards = d.placements.map(p => `
+    <div class="conv-card simplify">
+      <div class="conv-head"><span class="conv-step">${esc(p.position)}</span><span class="conv-tag simplify">${p.count}本 / ${esc(p.windingType)}</span></div>
+      <div class="conv-body">
+        <div><div class="conv-col-label">使用ロッド</div><div class="conv-new"><span class="sw" style="background:${rodHex(p.smartrodName, p.smartrodMm)};${rodIsBlack(p.smartrodMm)?"border:1.5px solid #2a2a2a;":""}"></span>${esc(p.smartrodName)} ${p.smartrodMm}mm</div></div>
+        <div><div class="conv-col-label">カールの狙い</div><div class="conv-old">${esc(p.curlNote||"—")}</div></div>
+      </div>
+    </div>`).join("");
+
+  // ロッド凡例
+  const legendItems = Object.values(agg).map(a => `
+    <div class="rod-legend-item">
+      <div class="rod-legend-swatch" style="background:${rodHex(a.name, a.mm)};${rodIsBlack(a.mm)?"border:1.5px solid #2a2a2a;":""}"></div>
+      ${esc(a.name)} ${a.mm}mm
+    </div>`).join("");
+
+  const shareText = buildShareText(d);
+
+  out.innerHTML = `
+    <div class="stats">
+      <div class="stat"><div class="stat-label">推定スタイル</div><div class="stat-num" style="font-size:18px">${esc(d.styleName)}</div><div class="stat-foot">${esc(d.hairLength)}</div></div>
+      <div class="stat accent"><div class="stat-label">ロッド合計</div><div class="stat-num simplify">${totalRods}<span class="unit"> 本</span></div><div class="stat-foot">${Object.keys(agg).length}サイズ使用</div></div>
+      <div class="stat"><div class="stat-label">解析確度</div><div class="stat-num" style="font-size:22px">${confJp[d.confidence]||"中"}</div></div>
+    </div>
+    <div class="note-box info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg><span>${esc(d.observation)}</span></div>
+
+    <!-- SVG頭部マップ -->
+    <div class="diagram-wrap">
+      <div class="diagram-title">
+        頭部展開図（上面ビュー）
+        <span class="btn-row"><button class="copy-btn gold" onclick="playPlanInMovie()">▶ 巻きムービーで再生</button><button class="copy-btn" onclick="copyShareText()">📋 テキストをコピー</button></span>
+      </div>
+      ${buildHeadSVG(d.placements)}
+      <div class="rod-legend">${legendItems}</div>
+      <div class="share-section">
+        <div class="share-text" id="share-text-content">${esc(shareText)}</div>
+      </div>
+    </div>
+
+    <h3 style="font-size:14px;font-weight:800;margin:24px 0 12px;letter-spacing:-0.01em">部位ごとのロッド配置</h3>
+    ${cards}
+    <div class="parts"><div class="parts-head">必要なスマートロッド（集計）</div><table><thead><tr><td>サイズ・カラー</td><td class="ta-r">本数</td></tr></thead><tbody>${aggRows}</tbody></table></div>
+    <div class="note-box info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v6M12 2L9 5M12 2l3 3"/><circle cx="12" cy="14" r="7"/></svg><span><strong>毛先コントロール:</strong> ${esc(d.fingerTechnique)}</span></div>
+    <div class="note-box warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 20h20L12 2z"/><path d="M12 9v4M12 17h.01"/></svg><span><strong>確度:</strong> <span>${confJp[d.confidence]||"中"}</span>　${esc(d.advice)} <span class="sr-n">この設計はたたき台です。最終調整は施術者が行ってください。</span></span></div>`;
+}
+
+function copyShareText() {
+  const el = document.getElementById("share-text-content");
+  if (!el) return;
+  const text = el.textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.querySelector(".copy-btn:not(.gold)");
+    if (btn) { btn.textContent = "✓ コピーしました"; setTimeout(() => { btn.textContent = "📋 テキストをコピー"; }, 2000); }
+  }).catch(() => {
+    // fallback
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand("copy");
+    document.body.removeChild(ta);
+  });
+}
+
+// ═══════════════════════════════
+// AIチャット
+// ═══════════════════════════════
+let chatHistory = [];
+const chatMsgs = document.getElementById("chat-msgs");
+const chatText = document.getElementById("chat-text");
+const chatSend = document.getElementById("chat-send");
+const chatEmpty = document.getElementById("chat-empty");
+
+document.getElementById("chat-suggest").innerHTML = CHAT_SUGGESTIONS.map(s =>
+  `<button class="chip" onclick="askChat('${s}')">${s}</button>`).join("");
+
+function addMsg(role, text) {
+  if (chatEmpty) chatEmpty.style.display = "none";
+  const div = document.createElement("div");
+  div.className = "msg " + role;
+  div.textContent = text;
+  chatMsgs.appendChild(div);
+  chatMsgs.scrollTop = chatMsgs.scrollHeight;
+  return div;
+}
+
+async function askChat(preset) {
+  if (chatSend.disabled) return; // [FIX M-2] 待機中の並行リクエスト防止
+  const q = preset || chatText.value.trim();
+  if (!q) return;
+  chatText.value = "";
+  addMsg("user", q);
+  chatHistory.push({ role:"user", content:q });
+  const thinking = addMsg("ai", "…");
+  chatSend.disabled = true;
+
+
+  try {
+    const reply = await callApi("chat", { messages: chatHistory });
+    thinking.textContent = reply;
+    chatHistory.push({ role:"assistant", content:reply });
+  } catch(e) {
+    thinking.textContent = "⚠️ " + e.message;
+    chatHistory.pop();
+  } finally {
+    chatSend.disabled = false;
+    chatMsgs.scrollTop = chatMsgs.scrollHeight;
+  }
+}
+chatSend.onclick = () => askChat();
+chatText.onkeydown = e => { // [FIX S-1] IME変換確定Enterでの誤送信を防止
+  if (e.key === "Enter" && !e.isComposing && e.keyCode !== 229) askChat();
+};
+
+function esc(s) {
+  return String(s == null ? "" : s)
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+</script>
+<script>
+// ═══════════════════════════════
+// ⑥ 巻きムービー（線図シミュレーション）v4新機能
+//  - 1本ずつの巻き工程: 角度→毛先→挿入→ロック→巻き込み→根元→ゴム
+//  - 全頭の巻き順: トップ→下の段→耳周り→ネープ（逆順も可）
+//  - データ源: ②スタイル→展開図の結果 / 実例写真ベースのプリセット
+// ═══════════════════════════════
+
+const MV_ZONE_ORDER = ["トップ","前頭部","バック上","バック下","右サイド","左サイド","襟足"];
+const MV_ZONE_ANGLE = { "前頭部":90, "トップ":90, "バック上":75, "バック下":60, "右サイド":45, "左サイド":45, "襟足":45 };
+
+// 実例写真（35症例）ベースの配置プリセット
+const MV_PRESETS = [
+  { id:"bob1", label:"ワンカールボブ", note:"横巻き・段構成の基本形",
+    plan:{ styleName:"ワンカールボブ", hairLength:"ボブ", placements:[
+      {position:"バック上", smartrodName:"B+グリーン", smartrodMm:20, count:4, windingType:"ヒラ巻き", angle:75, curlNote:"面を残して大きくワンカール"},
+      {position:"バック下", smartrodName:"ピンク", smartrodMm:16, count:4, windingType:"ヒラ巻き", angle:60, curlNote:"中間のつなぎ"},
+      {position:"右サイド", smartrodName:"ピンク", smartrodMm:16, count:2, windingType:"ヒラ巻き", angle:45, curlNote:"耳周りは自然に流す"},
+      {position:"左サイド", smartrodName:"ピンク", smartrodMm:16, count:2, windingType:"ヒラ巻き", angle:45, curlNote:"耳周りは自然に流す"},
+      {position:"襟足", smartrodName:"ブルー", smartrodMm:11, count:3, windingType:"ヒラ巻き", angle:45, curlNote:"締めて収まり良く"} ] } },
+  { id:"bob2", label:"ゆるウェーブボブ", note:"サイズミックスの柔らか波",
+    plan:{ styleName:"ゆるウェーブボブ", hairLength:"ボブ〜ミディアム", placements:[
+      {position:"トップ", smartrodName:"B+オレンジ", smartrodMm:22, count:2, windingType:"ヒラ巻き", angle:90, curlNote:"根元ふんわり"},
+      {position:"バック上", smartrodName:"B+グリーン", smartrodMm:20, count:3, windingType:"波巻き", angle:75, curlNote:"大きな揺れ"},
+      {position:"バック下", smartrodName:"B+ブルー", smartrodMm:18, count:4, windingType:"波巻き", angle:60, curlNote:"波のつなぎ"},
+      {position:"右サイド", smartrodName:"B+ブルー", smartrodMm:18, count:2, windingType:"ヒラ巻き", angle:45, curlNote:"顔まわり柔らかく"},
+      {position:"左サイド", smartrodName:"B+ブルー", smartrodMm:18, count:2, windingType:"ヒラ巻き", angle:45, curlNote:"顔まわり柔らかく"},
+      {position:"襟足", smartrodName:"オレンジ", smartrodMm:14, count:3, windingType:"ヒラ巻き", angle:45, curlNote:"首元は細かく締める"} ] } },
+  { id:"mens1", label:"メンズカールマッシュ", note:"毛流れに沿う前方向配置",
+    plan:{ styleName:"カールマッシュ", hairLength:"ショート", placements:[
+      {position:"トップ", smartrodName:"オレンジ", smartrodMm:14, count:6, windingType:"ツイストスパイラル", angle:90, curlNote:"前方向の毛流れ・動き"},
+      {position:"前頭部", smartrodName:"ピンク", smartrodMm:16, count:2, windingType:"ツイシー巻き", angle:90, curlNote:"前髪は抜け感"},
+      {position:"バック上", smartrodName:"オレンジ", smartrodMm:14, count:4, windingType:"スパイラル巻き", angle:75, curlNote:"つむじ周りに動き"},
+      {position:"右サイド", smartrodName:"ブルー", smartrodMm:11, count:2, windingType:"ヒラ巻き", angle:45, curlNote:"耳周りタイト"},
+      {position:"左サイド", smartrodName:"ブルー", smartrodMm:11, count:2, windingType:"ヒラ巻き", angle:45, curlNote:"耳周りタイト"},
+      {position:"襟足", smartrodName:"ブルー", smartrodMm:11, count:2, windingType:"ヒラ巻き", angle:45, curlNote:"えり足を締める"} ] } },
+  { id:"mens2", label:"メンズ強めパーマ", note:"11mm主体のしっかりカール",
+    plan:{ styleName:"強めカールショート", hairLength:"ベリーショート〜ショート", placements:[
+      {position:"トップ", smartrodName:"ブルー", smartrodMm:11, count:6, windingType:"スパイラル巻き", angle:90, curlNote:"しっかりリッジ"},
+      {position:"前頭部", smartrodName:"ブルー", smartrodMm:11, count:2, windingType:"スパイラル巻き", angle:90, curlNote:"前髪も同調"},
+      {position:"バック上", smartrodName:"ブルー", smartrodMm:11, count:4, windingType:"スパイラル巻き", angle:75, curlNote:"後頭部に丸み"},
+      {position:"バック下", smartrodName:"ブルー", smartrodMm:11, count:3, windingType:"スパイラル巻き", angle:60, curlNote:"えり上も均一"},
+      {position:"右サイド", smartrodName:"ブルー", smartrodMm:11, count:2, windingType:"ヒラ巻き", angle:45, curlNote:"サイドタイト"},
+      {position:"左サイド", smartrodName:"ブルー", smartrodMm:11, count:2, windingType:"ヒラ巻き", angle:45, curlNote:"サイドタイト"},
+      {position:"襟足", smartrodName:"ブルー", smartrodMm:11, count:2, windingType:"ヒラ巻き", angle:45, curlNote:"締める"} ] } },
+  { id:"nuance1", label:"ニュアンスパーマ（大きめ）", note:"20mm以上で作る質感",
+    plan:{ styleName:"ニュアンスパーマ", hairLength:"ショート〜ミディアム", placements:[
+      {position:"トップ", smartrodName:"B+オレンジ", smartrodMm:22, count:3, windingType:"スパイラル巻き", angle:90, curlNote:"大きめのゆるい動き"},
+      {position:"前頭部", smartrodName:"B+グリーン", smartrodMm:20, count:2, windingType:"ヒラ巻き", angle:95, curlNote:"前髪はふんわり"},
+      {position:"バック上", smartrodName:"B+オレンジ", smartrodMm:22, count:3, windingType:"スパイラル巻き", angle:80, curlNote:"つむじ周りに柔らかい動き"},
+      {position:"右サイド", smartrodName:"B+グリーン", smartrodMm:20, count:2, windingType:"ヒラ巻き", angle:45, curlNote:"耳周りは自然に"},
+      {position:"左サイド", smartrodName:"B+グリーン", smartrodMm:20, count:2, windingType:"ヒラ巻き", angle:45, curlNote:"耳周りは自然に"} ] } },
+  { id:"feather1", label:"フェザーパーマ（外ハネ）", note:"18mm以上・毛先ワンカール",
+    plan:{ styleName:"フェザーパーマ", hairLength:"ボブ〜ミディアム", placements:[
+      {position:"バック上", smartrodName:"B+グリーン", smartrodMm:20, count:3, windingType:"ワンカール（下巻き・外ハネ）", angle:70, curlNote:"面を残して毛先だけ外へ"},
+      {position:"バック下", smartrodName:"B+ブルー", smartrodMm:18, count:3, windingType:"ワンカール（下巻き・外ハネ）", angle:60, curlNote:"ハネの主役"},
+      {position:"右サイド", smartrodName:"B+ブルー", smartrodMm:18, count:2, windingType:"ワンカール（下巻き・外ハネ）", angle:45, curlNote:"サイドも同調して外へ"},
+      {position:"左サイド", smartrodName:"B+ブルー", smartrodMm:18, count:2, windingType:"ワンカール（下巻き・外ハネ）", angle:45, curlNote:"サイドも同調して外へ"},
+      {position:"襟足", smartrodName:"B+ブルー", smartrodMm:18, count:2, windingType:"ワンカール（下巻き・外ハネ）", angle:45, curlNote:"えり足からしっかりハネ上げ"} ] } },
+];
+
+const MV_PH = [
+  { key:"角度",     f:0.12 },
+  { key:"毛先",     f:0.10 },
+  { key:"挿入",     f:0.12 },
+  { key:"ロック",   f:0.10 },
+  { key:"巻き込み", f:0.40 },
+  { key:"根元",     f:0.06 },
+  { key:"ゴム",     f:0.10 },
+];
+
+function mvCaption(pi, rod, tip){
+  switch(pi){
+    case 0: return "① スライスを取り、角度 " + rod.angle + "° にパネルを引き出す";
+    case 1: return tip === "out" ? "② 毛先を外す（先端は巻き込まずに逃がす）" : "② 毛先を整えて、カバーのスリットに通す準備";
+    case 2: return "③ " + rod.mm + "mmロッドを毛先位置にセット（スリットに通す）";
+    case 3: return "④ カバーを閉じてロック — カチッ";
+    case 4: return "⑤ 芯が回転し、一定テンションで根元へ巻き込む";
+    case 5: return "⑥ 根元に到達 — 頭皮に密着させる";
+    default: return "⑦ シリコンゴムを掛けて固定 — 完了";
+  }
+}
+
+const MV = { plan:null, planLabel:"", queue:[], idx:0, g:0, playing:false, speed:1, raf:0, last:0, tip:"normal", order:"std", waiting:false, wtok:0 };
+const MV_ROD_DUR = 6000; // 1本あたりの基準時間(ms)
+
+function mvClampAngle(a, zoneName){
+  const n = Number(a);
+  if (isFinite(n) && n >= 20 && n <= 150) return Math.round(n);
+  return MV_ZONE_ANGLE[zoneName] || 60;
+}
+
+function mvBuildQueue(){
+  if (!MV.plan) return [];
+  const items = (MV.plan.placements || []).slice().sort((a, b) => {
+    const za = findZone(a.position), zb = findZone(b.position);
+    const ia = za ? MV_ZONE_ORDER.indexOf(za.name) : 99;
+    const ib = zb ? MV_ZONE_ORDER.indexOf(zb.name) : 99;
+    return ia - ib;
+  });
+  const q = [];
+  items.forEach(p => {
+    const z = findZone(p.position);
+    const rod = rodInfo(p.smartrodMm, p.smartrodName);
+    const n = Math.min(Math.max(1, Number(p.count) || 1), 8);
+    for (let i = 0; i < n; i++){
+      q.push({
+        zone: z ? z.name : String(p.position || "?"),
+        mm: rod ? rod.mm : (Number(p.smartrodMm) || 14),
+        name: rod ? rod.name : String(p.smartrodName || "?"),
+        hex: rod ? rod.hex : "#aaa",
+        black: rod ? rod.base === "黒" : false,
+        winding: p.windingType || "ヒラ巻き",
+        angle: mvClampAngle(p.angle, z ? z.name : ""),
+        note: p.curlNote || ""
+      });
+    }
+  });
+  if (MV.order === "rev") q.reverse();
+  return q.slice(0, 48);
+}
+
+// ─── 1本巻きアニメーション: 指定進行度gのフレームをSVGで返す（純関数）───
+function mvStageSVG(rod, g, tip){
+  // フェーズ解決
+  let acc = 0, pi = MV_PH.length - 1, u = 1;
+  for (let i = 0; i < MV_PH.length; i++){
+    if (g < acc + MV_PH[i].f){ pi = i; u = (g - acc) / MV_PH[i].f; break; }
+    acc += MV_PH[i].f;
+  }
+  const ez  = t => t <= 0 ? 0 : t >= 1 ? 1 : (t < .5 ? 2*t*t : 1 - Math.pow(-2*t + 2, 2) / 2);
+  const eob = t => { const c = 1.70158, p = t - 1; return 1 + (c + 1)*p*p*p + c*p*p; };
+  const F = n => Number(n).toFixed(1);
+
+  const P0 = { x:250, y:252 }, L = 196;
+  const a  = rod.angle * Math.PI / 180;
+  const dx = Math.cos(a), dy = -Math.sin(a);
+  const px = -dy, py = dx; // 法線
+  const pt = d => ({ x: P0.x + dx*d, y: P0.y + dy*d });
+  const R  = Math.round(8 + (rod.mm - 11) * 0.92);
+  const tipOut = tip === "out";
+  const sTip = tipOut ? L * 0.86 : L * 0.97;
+  const sEnd = R + 7;
+
+  // ロッド中心位置s（根元からの距離）
+  let s = sTip;
+  if (pi === 4) s = sTip + (sEnd - sTip) * ez(u);
+  else if (pi > 4) s = sEnd;
+  const entry = (pi === 2) ? 34 * (1 - ez(u)) : 0; // 挿入スライド
+  const effS = Math.min(L + 20, s + entry);
+  const C = pt(effS);
+  const rodOp = pi < 2 ? 0 : (pi === 2 ? ez(u) : 1);
+
+  const grow = pi > 0 ? 1 : ez(Math.min(1, u * 1.2));
+  const baseSolid = tipOut ? L * 0.86 : L;
+  const solidEnd = pi < 4 ? baseSolid * (pi === 0 ? grow : 1) : Math.max(s, 2);
+
+  const w    = pi < 4 ? 0 : (pi === 4 ? ez(u) : 1);          // 巻き取り率
+  const spin = w * (720 + (24 - rod.mm) * 30);               // 回転角
+  const sy   = pi === 5 ? 1 - 0.10 * Math.sin(u * Math.PI) : 1; // 根元スクワッシュ
+  const openDeg = pi < 3 ? -75 : (pi === 3 ? -75 * (1 - ez(u)) : 0);
+  const coverCol = rod.black ? "#2a2a2a" : rod.hex;
+
+  const taper = (d1, d2, w1, w2, fill, op) => {
+    const A = pt(d1), B = pt(d2);
+    return '<path d="M' + F(A.x + px*w1) + ',' + F(A.y + py*w1) + ' L' + F(B.x + px*w2) + ',' + F(B.y + py*w2) +
+           ' L' + F(B.x - px*w2) + ',' + F(B.y - py*w2) + ' L' + F(A.x - px*w1) + ',' + F(A.y - py*w1) +
+           ' Z" fill="' + fill + '" opacity="' + op + '"/>';
+  };
+  const arc = (cx, cy, r, a1, a2, sw) => { // 画面角度(0=右,90=下), sweep=1で時計回り
+    const r1 = a1 * Math.PI/180, r2 = a2 * Math.PI/180;
+    return 'M' + F(cx + r*Math.cos(r1)) + ',' + F(cy + r*Math.sin(r1)) +
+           ' A' + r + ',' + r + ' 0 0 ' + sw + ' ' + F(cx + r*Math.cos(r2)) + ',' + F(cy + r*Math.sin(r2));
+  };
+
+  let sv = '<svg viewBox="0 0 560 330" xmlns="http://www.w3.org/2000/svg">';
+
+  // 頭皮
+  sv += '<rect x="0" y="252" width="560" height="78" fill="#f5f0eb"/>';
+  sv += '<line x1="0" y1="252" x2="560" y2="252" stroke="#c8c0b8" stroke-width="2"/>';
+  for (let hx = 34; hx <= 540; hx += 30)
+    sv += '<line x1="' + hx + '" y1="252" x2="' + (hx - 9) + '" y2="263" stroke="#ddd5c9" stroke-width="1.4"/>';
+  sv += '<text x="544" y="272" font-size="9" fill="#b0a898" text-anchor="end" font-family="sans-serif">頭皮</text>';
+  sv += '<text x="' + F(P0.x - 8) + '" y="270" font-size="9.5" fill="#8a8272" text-anchor="end" font-weight="700" font-family="sans-serif">根元</text>';
+  sv += '<circle cx="' + P0.x + '" cy="' + P0.y + '" r="3" fill="#8a8272"/>';
+
+  // 角度ガイド
+  const thShow = rod.angle * (pi > 0 ? 1 : Math.min(1, u * 1.4));
+  if (thShow > 4){
+    const tr = thShow * Math.PI/180, ar = 40;
+    sv += '<path d="M' + (P0.x + ar) + ',' + P0.y + ' A' + ar + ',' + ar + ' 0 0 0 ' +
+          F(P0.x + ar*Math.cos(tr)) + ',' + F(P0.y - ar*Math.sin(tr)) + '" fill="none" stroke="#b5740b" stroke-width="1.8"/>';
+    const hm = (rod.angle * Math.PI/180) / 2;
+    sv += '<text x="' + F(P0.x + 60*Math.cos(hm)) + '" y="' + F(P0.y - 60*Math.sin(hm) + 4) +
+          '" font-size="13" font-weight="800" fill="#b5740b" text-anchor="middle" font-family="sans-serif" opacity="' + (pi > 0 ? 1 : Math.min(1, u*2)) + '">' + rod.angle + '°</text>';
+  }
+
+  // 毛束（パネル）
+  if (solidEnd > 4){
+    sv += taper(0, solidEnd, 7, 3, "#23233a", 1);
+    const A2 = pt(4), B2 = pt(Math.max(6, solidEnd - 2));
+    sv += '<line x1="' + F(A2.x + px*2.3) + '" y1="' + F(A2.y + py*2.3) + '" x2="' + F(B2.x + px*1.2) + '" y2="' + F(B2.y + py*1.2) + '" stroke="#4b4b66" stroke-width="0.9"/>';
+    sv += '<line x1="' + F(A2.x - px*2.3) + '" y1="' + F(A2.y - py*2.3) + '" x2="' + F(B2.x - px*1.2) + '" y2="' + F(B2.y - py*1.2) + '" stroke="#4b4b66" stroke-width="0.9"/>';
+  }
+  // 毛先外し（点線の先端）
+  if (tipOut && pi < 4 && grow > 0.85){
+    const T1 = pt(L * 0.86), T2 = pt(L);
+    sv += '<line x1="' + F(T1.x) + '" y1="' + F(T1.y) + '" x2="' + F(T2.x) + '" y2="' + F(T2.y) + '" stroke="#23233a" stroke-width="3" stroke-dasharray="5,4" opacity="0.8" stroke-linecap="round"/>';
+    if (pi === 1) sv += '<text x="' + F(T2.x + dx*14) + '" y="' + F(T2.y + dy*14 + 3) + '" font-size="10.5" font-weight="800" fill="#d4537e" text-anchor="middle" font-family="sans-serif">毛先は外す</text>';
+  }
+  if (pi < 4 && grow > 0.9 && !(tipOut && pi === 1)){
+    const T = pt(L);
+    sv += '<text x="' + F(T.x + dx*14) + '" y="' + F(T.y + dy*14 + 3) + '" font-size="9" fill="#b0a898" text-anchor="middle" font-family="sans-serif">毛先</text>';
+  }
+
+  // ロッド本体
+  if (rodOp > 0.02){
+    sv += '<g opacity="' + F(rodOp) + '" transform="translate(' + F(C.x) + ' ' + F(C.y) + ') scale(1 ' + F(sy) + ') translate(' + F(-C.x) + ' ' + F(-C.y) + ')">';
+    // 逃がした毛先の房（ロック後）
+    if (tipOut && pi >= 3){
+      for (let k = -1; k <= 1; k++){
+        const fa = a + k * 0.16;
+        const ex = C.x + Math.cos(fa) * (R + 2), ey = C.y - Math.sin(fa) * (R + 2);
+        sv += '<line x1="' + F(ex) + '" y1="' + F(ey) + '" x2="' + F(ex + Math.cos(fa)*15) + '" y2="' + F(ey - Math.sin(fa)*15) + '" stroke="#23233a" stroke-width="2" stroke-linecap="round" opacity="0.55"/>';
+      }
+    }
+    // 芯
+    sv += '<circle cx="' + F(C.x) + '" cy="' + F(C.y) + '" r="' + R + '" fill="' + rod.hex + '" stroke="' + (rod.black ? "#2a2a2a" : "rgba(0,0,0,.25)") + '" stroke-width="' + (rod.black ? 2 : 1.2) + '"/>';
+    // 回転する穴・マーク
+    sv += '<g transform="rotate(' + F(spin) + ' ' + F(C.x) + ' ' + F(C.y) + ')">';
+    for (let k = 0; k < 3; k++){
+      const ha = k * 2 * Math.PI / 3;
+      sv += '<circle cx="' + F(C.x + Math.cos(ha)*R*0.5) + '" cy="' + F(C.y + Math.sin(ha)*R*0.5) + '" r="' + F(Math.max(1.4, R*0.14)) + '" fill="rgba(255,255,255,.8)"/>';
+    }
+    sv += '<line x1="' + F(C.x) + '" y1="' + F(C.y) + '" x2="' + F(C.x + R*0.78) + '" y2="' + F(C.y) + '" stroke="rgba(255,255,255,.9)" stroke-width="2"/>';
+    sv += '</g>';
+    sv += '<circle cx="' + F(C.x) + '" cy="' + F(C.y) + '" r="2.2" fill="#fff" opacity="0.85"/>';
+    // 巻き付いた髪（リング）
+    if (w > 0){
+      sv += '<circle cx="' + F(C.x) + '" cy="' + F(C.y) + '" r="' + F(R + 1.6) + '" fill="none" stroke="#23233a" stroke-width="2.6" opacity="' + F(0.9 * Math.min(1, w*2)) + '" stroke-dasharray="' + F(R*1.1) + ' ' + F(R*0.45) + '" transform="rotate(' + F(spin*0.85) + ' ' + F(C.x) + ' ' + F(C.y) + ')"/>';
+      if (w > 0.45)
+        sv += '<circle cx="' + F(C.x) + '" cy="' + F(C.y) + '" r="' + F(R + 3.8) + '" fill="none" stroke="#23233a" stroke-width="2" opacity="' + F(0.6 * (w - 0.45) / 0.55) + '" stroke-dasharray="' + F(R*1.3) + ' ' + F(R*0.5) + '" transform="rotate(' + F(-spin*0.5) + ' ' + F(C.x) + ' ' + F(C.y) + ')"/>';
+    }
+    // カバー（下クレイドル + 上フラップ）
+    sv += '<path d="' + arc(C.x, C.y, R + 3.5, 20, 160, 1) + '" fill="none" stroke="' + coverCol + '" stroke-width="4.5" stroke-linecap="round" opacity="0.95"/>';
+    sv += '<g transform="rotate(' + F(openDeg) + ' ' + F(C.x) + ' ' + F(C.y) + ')">';
+    sv += '<path d="' + arc(C.x, C.y, R + 3.5, 200, 340, 1) + '" fill="none" stroke="' + coverCol + '" stroke-width="4.5" stroke-linecap="round" opacity="0.95"/>';
+    sv += '</g>';
+    if (pi > 3 || (pi === 3 && u > 0.95))
+      sv += '<line x1="' + F(C.x - px*R*0.8) + '" y1="' + F(C.y - py*R*0.8) + '" x2="' + F(C.x + px*R*0.8) + '" y2="' + F(C.y + py*R*0.8) + '" stroke="#fff" stroke-width="1.4" stroke-dasharray="2,2" opacity="0.85"/>';
+    sv += '</g>';
+  }
+
+  // カチッ（ロック確定フラッシュ）
+  if (pi === 3 && u > 0.8){
+    const fu = (u - 0.8) / 0.2;
+    sv += '<circle cx="' + F(C.x) + '" cy="' + F(C.y) + '" r="' + F(R + 8 + fu*26) + '" fill="none" stroke="#FFB800" stroke-width="2.5" opacity="' + F((1 - fu) * 0.9) + '"/>';
+  }
+  if (pi === 4 && u < 0.18)
+    sv += '<text x="' + F(C.x + R + 14) + '" y="' + F(C.y - R - 8) + '" font-size="12" font-weight="900" fill="#FFB800" font-family="sans-serif" opacity="' + F(1 - u/0.18) + '">カチッ</text>';
+
+  // シリコンゴム + 完了チェック
+  if (pi >= 6){
+    const pop = pi === 6 ? Math.max(0, Math.min(1.15, eob(Math.min(1, u * 1.15)))) : 1;
+    sv += '<g transform="rotate(28 ' + F(C.x) + ' ' + F(C.y) + ')">';
+    sv += '<ellipse cx="' + F(C.x) + '" cy="' + F(C.y) + '" rx="' + F((R + 7) * pop) + '" ry="' + F(3.4 * Math.max(0.4, pop)) + '" fill="none" stroke="#c9b78c" stroke-width="3.2"/>';
+    sv += '<ellipse cx="' + F(C.x) + '" cy="' + F(C.y - 1) + '" rx="' + F((R + 5.5) * pop) + '" ry="' + F(2 * Math.max(0.4, pop)) + '" fill="none" stroke="#e8dcbf" stroke-width="1.1" opacity="0.8"/>';
+    sv += '</g>';
+    if (u > 0.55 || pi > 6){
+      sv += '<circle cx="' + F(C.x + R + 16) + '" cy="' + F(C.y - R - 10) + '" r="9" fill="#0f9e75"/>';
+      sv += '<path d="M' + F(C.x + R + 11.5) + ',' + F(C.y - R - 10) + ' l3.2,3.4 l5.6,-6.4" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>';
+    }
+  }
+
+  // 上部インフォ
+  sv += '<text x="14" y="22" font-size="11.5" font-weight="700" fill="#5a5a6e" font-family="sans-serif">' +
+        esc(rod.zone) + '　' + esc(rod.name) + ' ' + rod.mm + 'mm　角度' + rod.angle + '°　' + esc(rod.winding) + '</text>';
+
+  sv += '</svg>';
+  return { svg: sv, pi: pi };
+}
+
+// ─── 巻き順マップ（頭部・番号付き）───
+function mvRot2d(x, y, cx, cy, deg){
+  const r = deg * Math.PI / 180, c = Math.cos(r), s = Math.sin(r), dx0 = x - cx, dy0 = y - cy;
+  return { x: cx + dx0*c - dy0*s, y: cy + dx0*s + dy0*c };
+}
+
+function mvMapSVG(queue){
+  const F = n => Number(n).toFixed(1);
+  let sv = '<svg viewBox="0 0 480 460" xmlns="http://www.w3.org/2000/svg">';
+  sv += '<ellipse cx="240" cy="220" rx="155" ry="185" fill="#f7f3ee" stroke="#c8c0b8" stroke-width="2"/>';
+  sv += '<ellipse cx="87" cy="220" rx="18" ry="28" fill="#ede8e2" stroke="#c8c0b8" stroke-width="1.5"/>';
+  sv += '<ellipse cx="393" cy="220" rx="18" ry="28" fill="#ede8e2" stroke="#c8c0b8" stroke-width="1.5"/>';
+  sv += '<ellipse cx="240" cy="118" rx="110" ry="88" fill="none" stroke="#d8d0c4" stroke-width="1" stroke-dasharray="4,3"/>';
+  sv += '<text x="240" y="20" text-anchor="middle" font-size="10" fill="#9a9aae" font-family="sans-serif">前頭部</text>';
+  sv += '<text x="240" y="450" text-anchor="middle" font-size="10" fill="#9a9aae" font-family="sans-serif">襟足</text>';
+
+  const groups = {};
+  queue.forEach((r, i) => { (groups[r.zone] = groups[r.zone] || []).push({ r, i }); });
+
+  for (const zone of Object.keys(groups)){
+    const z = ZONE_MAP[zone];
+    if (!z) continue;
+    sv += '<ellipse cx="' + z.cx + '" cy="' + z.cy + '" rx="' + z.rx + '" ry="' + z.ry + '" fill="none" stroke="#ddd8d0" stroke-width="1" stroke-dasharray="3,3"/>';
+    sv += '<text x="' + z.cx + '" y="' + (z.cy - z.ry - 4) + '" text-anchor="middle" font-size="8.5" fill="#b0a898" font-family="sans-serif">' + esc(zone) + '</text>';
+  }
+
+  for (const zone of Object.keys(groups)){
+    const z = ZONE_MAP[zone];
+    const arr = groups[zone];
+    if (!z){
+      arr.forEach(({ r, i }, k) => {
+        const cx0 = 60 + k * 22, cy0 = 435;
+        sv += '<g class="mv-rod" data-i="' + i + '"><rect x="' + (cx0 - 5) + '" y="' + (cy0 - 8) + '" width="10" height="16" rx="5" fill="' + r.hex + '" stroke="rgba(0,0,0,.2)"/>' +
+              '<g class="mv-num" transform="translate(' + cx0 + ' ' + (cy0 - 17) + ')"><circle r="7.2" fill="#1a1a2e"/><text y="3" text-anchor="middle" font-size="8.5" font-weight="800" fill="#FFB800" font-family="sans-serif">' + (i + 1) + '</text></g></g>';
+      });
+      continue;
+    }
+    const n = arr.length;
+    const perRow = Math.min(4, n);
+    const rows = Math.ceil(n / perRow);
+    const maxW = Math.max.apply(null, arr.map(o => Math.max(5, Math.min(15, o.r.mm * 0.55))));
+    const sp = Math.max(13, maxW + 4);
+    const rh = rows > 1 ? 12 : 16;
+    arr.forEach(({ r, i }, k) => {
+      const col = k % perRow, row = Math.floor(k / perRow);
+      const w = Math.max(5, Math.min(15, r.mm * 0.55));
+      const cxr = z.cx - ((Math.min(n, perRow) - 1) * sp) / 2 + col * sp;
+      const cyr = z.cy - ((rows - 1) * (rh + 5)) / 2 + row * (rh + 5);
+      const rc = mvRot2d(cxr, cyr, z.cx, z.cy, z.angle || 0);
+      sv += '<g class="mv-rod" data-i="' + i + '">';
+      sv += '<g transform="rotate(' + (z.angle || 0) + ' ' + z.cx + ' ' + z.cy + ')">';
+      sv += '<rect x="' + F(cxr - w/2) + '" y="' + F(cyr - rh/2) + '" width="' + F(w) + '" height="' + rh + '" rx="' + F(w/2) + '" fill="' + r.hex + '" ' +
+            (r.black ? 'stroke="#2a2a2a" stroke-width="1.6"' : 'stroke="rgba(0,0,0,.2)" stroke-width="1"') + '/>';
+      sv += '</g>';
+      sv += '<g class="mv-num" transform="translate(' + F(rc.x) + ' ' + F(rc.y - rh/2 - 8) + ')"><circle r="7.2" fill="#1a1a2e"/><text y="3" text-anchor="middle" font-size="8.5" font-weight="800" fill="#FFB800" font-family="sans-serif">' + (i + 1) + '</text></g>';
+      sv += '</g>';
+    });
+  }
+  sv += '</svg>';
+  return sv;
+}
+
+// ─── 描画・進行 ───
+function mvInfo(rod){
+  const el = document.getElementById("mv-info");
+  if (!el) return;
+  el.innerHTML =
+    '<div class="mv-info-head"><span class="mv-swatch" style="background:' + rod.hex + ';' + (rod.black ? 'border:2px solid #2a2a2a;' : '') + '"></span>' +
+    '<div><div class="mv-info-name">' + esc(rod.name) + ' ' + rod.mm + 'mm</div>' +
+    '<div class="mv-info-zone">' + esc(rod.zone) + ' ・ ' + (MV.idx + 1) + '本目 / 全' + MV.queue.length + '本</div></div></div>' +
+    '<dl>' +
+    '<div><dt>角度</dt><dd>' + rod.angle + '°（頭皮基準）</dd></div>' +
+    '<div><dt>巻き方</dt><dd>' + esc(rod.winding) + '</dd></div>' +
+    '<div><dt>毛先</dt><dd>' + (MV.tip === "out" ? "外す（逃がす）" : "毛先から巻き込む") + '</dd></div>' +
+    '<div><dt>ねらい</dt><dd>' + esc(rod.note || "—") + '</dd></div>' +
+    '</dl>';
+}
+
+function mvPaintMap(){
+  document.querySelectorAll("#mv-map .mv-rod").forEach(el => {
+    const i = Number(el.dataset.i);
+    el.classList.toggle("done", i < MV.idx || (i === MV.idx && MV.g >= 1));
+    el.classList.toggle("cur", i === MV.idx && MV.g < 1);
+  });
+}
+
+function mvDraw(){
+  const rod = MV.queue[MV.idx];
+  if (!rod) return;
+  const res = mvStageSVG(rod, MV.g, MV.tip);
+  const stage = document.getElementById("mv-stage");
+  if (stage) stage.innerHTML = res.svg;
+  document.querySelectorAll("#mv-steps .mv-step").forEach((el, i) => el.classList.toggle("on", i === res.pi));
+  const cap = document.getElementById("mv-caption");
+  if (cap) cap.textContent = mvCaption(res.pi, rod, MV.tip);
+  const N = MV.queue.length;
+  const bar = document.getElementById("mv-bar");
+  if (bar) bar.style.width = (((MV.idx + Math.min(MV.g, 1)) / N) * 100).toFixed(1) + "%";
+  const pg = document.getElementById("mv-progress");
+  if (pg) pg.textContent = (MV.idx + 1) + " / " + N + " 本 — " + rod.zone + "・" + rod.name + " " + rod.mm + "mm";
+  mvInfo(rod);
+  mvPaintMap();
+}
+
+function mvPlayBtn(){
+  const b = document.getElementById("mv-play");
+  if (!b) return;
+  const ended = MV.queue.length && MV.idx >= MV.queue.length - 1 && MV.g >= 1;
+  b.textContent = MV.playing ? "⏸ 一時停止" : (ended ? "▶ もう一度" : "▶ 再生");
+}
+
+function mvTick(ts){
+  if (!MV.playing){ MV.raf = 0; return; }
+  if (!MV.last) MV.last = ts;
+  const dt = Math.min(100, ts - MV.last);
+  MV.last = ts;
+  if (!MV.waiting){
+    MV.g += dt * MV.speed / MV_ROD_DUR;
+    if (MV.g >= 1){
+      MV.g = 1;
+      mvDraw();
+      if (MV.idx >= MV.queue.length - 1){
+        MV.playing = false; MV.raf = 0; mvPlayBtn();
+        const cap = document.getElementById("mv-caption");
+        if (cap) cap.textContent = "🎉 全 " + MV.queue.length + " 本の巻き込みが完了しました";
+        mvPaintMap();
+        return;
+      }
+      MV.waiting = true;
+      const tok = ++MV.wtok;
+      setTimeout(() => { if (MV.wtok !== tok || !MV.waiting) return; MV.idx++; MV.g = 0; MV.waiting = false; }, 340 / MV.speed);
+    } else {
+      mvDraw();
+    }
+  }
+  MV.raf = requestAnimationFrame(mvTick);
+}
+
+function mvPlay(){
+  if (!MV.queue.length) return;
+  if (MV.playing){ MV.playing = false; mvPlayBtn(); return; }
+  if (MV.idx >= MV.queue.length - 1 && MV.g >= 1){ MV.idx = 0; MV.g = 0; }
+  MV.playing = true; MV.last = 0; mvPlayBtn();
+  if (!MV.raf) MV.raf = requestAnimationFrame(mvTick);
+}
+
+function mvSeek(i){
+  if (!MV.queue.length) return;
+  MV.idx = Math.max(0, Math.min(MV.queue.length - 1, i));
+  MV.g = 0; MV.waiting = false; MV.wtok++;
+  mvDraw(); mvPlayBtn();
+  if (MV.playing && !MV.raf){ MV.last = 0; MV.raf = requestAnimationFrame(mvTick); }
+}
+
+function mvLoad(plan, label, autoplay){
+  MV.plan = plan; MV.planLabel = label;
+  MV.idx = 0; MV.g = 0; MV.playing = false; MV.waiting = false; MV.wtok++;
+  MV.queue = mvBuildQueue();
+  const empty = document.getElementById("mv-empty");
+  const body = document.getElementById("mv-body");
+  if (!MV.queue.length){
+    if (empty){ empty.style.display = "block"; empty.innerHTML = "この配置データは図に割り当てられませんでした。<br>部位名（トップ／バック上／襟足 など）をご確認ください。"; }
+    if (body) body.style.display = "none";
+    mvRenderSrc();
+    return;
+  }
+  if (empty) empty.style.display = "none";
+  if (body) body.style.display = "block";
+  const map = document.getElementById("mv-map");
+  if (map){
+    map.innerHTML = mvMapSVG(MV.queue);
+    map.querySelectorAll(".mv-rod").forEach(el => { el.onclick = () => mvSeek(Number(el.dataset.i)); });
+  }
+  mvDraw(); mvPlayBtn(); mvRenderSrc();
+  if (autoplay) mvPlay();
+}
+
+function mvRenderSrc(){
+  const row = document.getElementById("mv-src-row");
+  if (!row) return;
+  const hasPlan = !!window.SR_LAST_PLAN;
+  let html = '<button class="mv-chip ' + (MV.planLabel && MV.planLabel.indexOf("📷") === 0 ? "active" : "") + '" id="mv-chip-plan"' + (hasPlan ? "" : " disabled") + '>📷 最新の展開図<small>' +
+    (hasPlan ? esc(window.SR_LAST_PLAN.styleName || "生成済み") : "②で生成すると選べます") + '</small></button>';
+  html += MV_PRESETS.map(p =>
+    '<button class="mv-chip ' + (MV.planLabel === p.label ? "active" : "") + '" data-preset="' + p.id + '">' + esc(p.label) + '<small>' + esc(p.note) + '</small></button>'
+  ).join("");
+  row.innerHTML = html;
+  const pc = document.getElementById("mv-chip-plan");
+  if (pc && hasPlan) pc.onclick = () => mvLoad(window.SR_LAST_PLAN, "📷 " + (window.SR_LAST_PLAN.styleName || "最新の展開図"), false);
+  row.querySelectorAll("[data-preset]").forEach(el => {
+    el.onclick = () => {
+      const pr = MV_PRESETS.find(x => x.id === el.dataset.preset);
+      if (pr) mvLoad(pr.plan, pr.label, false);
+    };
+  });
+}
+
+window.playPlanInMovie = function(){
+  if (!window.SR_LAST_PLAN) return;
+  const tb = document.querySelector('.tab[data-tab="movie"]');
+  if (tb) tb.click();
+  mvLoad(window.SR_LAST_PLAN, "📷 " + (window.SR_LAST_PLAN.styleName || "最新の展開図"), true);
+};
+
+(function mvInitUI(){
+  const steps = document.getElementById("mv-steps");
+  if (steps) steps.innerHTML = MV_PH.map((p, i) => '<span class="mv-step">' + (i + 1) + '.' + p.key + '</span>').join("");
+  const on = (id, ev, fn) => { const el = document.getElementById(id); if (el) el[ev] = fn; };
+  on("mv-play", "onclick", mvPlay);
+  on("mv-prev", "onclick", () => mvSeek(MV.idx - 1));
+  on("mv-next", "onclick", () => mvSeek(MV.idx + 1));
+  on("mv-speed", "onchange", e => { MV.speed = parseFloat(e.target.value) || 1; });
+  on("mv-order", "onchange", e => { MV.order = e.target.value; if (MV.plan) mvLoad(MV.plan, MV.planLabel, false); });
+  on("mv-tip", "onchange", e => { MV.tip = e.target.value; if (MV.queue.length) mvDraw(); });
+  const tb = document.querySelector('.tab[data-tab="movie"]');
+  if (tb) tb.addEventListener("click", mvRenderSrc);
+  mvRenderSrc();
+})();
+</script>
+
+<!-- ═══ SMART ROD STYLE FINDER 受信（QR→展開図 自動反映）ここから ═══ -->
+<script>
+/* ═══════════════════════════════════════════════════════════
+   SMART ROD STYLE FINDER 受信モジュール（QR → 展開図 自動反映）
+   - URLハッシュ #srsf=<Base64URL(JSON)> を解析
+   - 診断レシピを placements 形式に変換し renderStyleResult() へ
+   - 巻きムービー(SR_LAST_PLAN)にも自動連携
+   ═══════════════════════════════════════════════════════════ */
+var SRSF_RECIPES = {"f_sh_nuance":{"n":"ニュアンスショート","len":"short","g":"F","st":1,"r":[[20,"トップ〜サイド","平巻き"],[18,"えり足","内巻き"]],"pro":"トップは根元1cmを外して中間から。えり足は18mmで首に沿わせて収める。"},"f_sh_kusege":{"n":"くせ毛風ふんわりショート","len":"short","g":"F","st":2,"r":[[16,"トップ","方向MIX"],[18,"サイド〜バック","平巻き"]],"pro":"細めのパネルでフォワード・リバースを交互に。仕上げはバームを揉み込むだけ。"},"f_bob_yuru":{"n":"ゆる波ウェーブボブ","len":"bob","g":"F","st":2,"r":[[22,"中間〜毛先","平巻き"],[20,"顔まわり","フォワード"]],"pro":"リッジを出しすぎない中間巻き。顔まわりは20mmで内に入れて小顔ラインに。"},"f_bob_hane":{"n":"外ハネニュアンスボブ","len":"bob","g":"F","st":1,"r":[[22,"毛先","外巻きワンカール"]],"pro":"毛先1回転のみ。えり足は角度低めに引き出して自然なハネに。"},"f_med_yoshin":{"n":"ヨシンモリ風ゆるふわ","len":"medium","g":"F","st":2,"r":[[24,"表面・顔まわり","リバース"],[22,"中間〜毛先","MIX巻き"]],"pro":"顔まわりは24mmリバースで流れを固定。中間はMIX巻きで束感を散らす。"},"f_med_kubire":{"n":"くびれミディ","len":"medium","g":"F","st":2,"r":[[22,"毛先","外ハネ"],[20,"顔まわり・表面","リバース"]],"pro":"ハネは低めの角度で。表面のリバースでくびれの立体感を強調する。"},"f_med_spiral":{"n":"ミディアムスパイラル","len":"medium","g":"F","st":3,"r":[[18,"全体","スパイラル"],[20,"表面","スパイラル"]],"pro":"根元を外して縦スライスで。表面は20mmでリッジを一段ゆるめ質感を柔らかく。"},"f_long_yuru":{"n":"ロング×ゆるウェーブ","len":"long","g":"F","st":2,"r":[[24,"表面","スパイラル"],[22,"内側","スパイラル"]],"pro":"内側22mm→表面24mmの2段構成。ダレやすい髪は中間だけ22mmに落とす。"},"f_long_wave":{"n":"しっかりウェーブロング","len":"long","g":"F","st":3,"r":[[16,"全体","スパイラル"],[18,"表面","スパイラル"]],"pro":"テンション一定の縦巻きで均一なリッジに。表面は18mmで柔らかさを残す。"},"f_long_nami":{"n":"波ウェーブロング","len":"long","g":"F","st":2,"r":[[20,"中間〜毛先","波巻き"]],"pro":"同じ毛束に方向を交互に入れて波を作る。面を残すと今っぽいツヤ波に。"},"m_vs_pin":{"n":"ベリーショート×ピンパーマ風","len":"vshort","g":"M","st":2,"r":[[11,"トップ","ランダム"],[14,"前髪","平巻き"]],"pro":"11mmで根元をふんわり。方向を散らしてくせ毛のニュアンスに。"},"m_vs_spain":{"n":"スペインカール風","len":"vshort","g":"M","st":3,"r":[[14,"トップ","スパイラル"],[11,"前髪","スパイラル"]],"pro":"サイド刈り上げ前提。前髪は根元近くから11mmでしっかり巻き込む。"},"m_sh_nuance":{"n":"ニュアンスパーマ","len":"mshort","g":"M","st":1,"r":[[16,"トップ","平巻き"],[18,"前髪","ワンカール"]],"pro":"毛先1〜1.5回転。前髪は割れないよう18mmで太めにパネルを取る。"},"m_sh_nami":{"n":"波巻きパーマ","len":"mshort","g":"M","st":2,"r":[[16,"全体","波巻き"],[14,"トップ","波巻き"]],"pro":"1束に方向違いで2〜3本入れて波を作る。毛先は逃して自然に。"},"m_sh_twist":{"n":"ツイストスパイラル","len":"mshort","g":"M","st":3,"r":[[11,"全体","ツイストスパイラル"],[14,"表面","スパイラル"]],"pro":"ねじりの強さで質感が激変する。初回はソフトツイスト推奨。"},"m_mash_spiral":{"n":"マッシュ×スパイラル","len":"mash","g":"M","st":2,"r":[[14,"全体","スパイラル"],[16,"表面","スパイラル"]],"pro":"ハチ上は根元を外して、ひし形シルエットをキープする。"},"m_mash_karma":{"n":"センターパート×カルマ風","len":"mash","g":"M","st":1,"r":[[20,"前髪","リバース（立ち上げ）"],[18,"トップ","平巻き"]],"pro":"前髪の根元は20mmで起こすだけ。毛先は流す方向に半回転。"},"m_mash_yuru":{"n":"ゆるめニュアンスマッシュ","len":"mash","g":"M","st":1,"r":[[18,"全体","平巻き"],[20,"前髪","ワンカール"]],"pro":"毛先中心に1回転。前髪は目にかからない角度で自然に流す。"}};
+
+var SRSF_MM2NAME = {11:"ブルー",14:"オレンジ",16:"ピンク",18:"B+ブルー",20:"B+グリーン",22:"B+オレンジ",24:"B+ピンク"};
+var SRSF_LEN = {short:"ショート",bob:"ボブ",medium:"ミディアム",long:"ロング",vshort:"ベリーショート",mshort:"ショート",mash:"マッシュ〜ミディアム"};
+var SRSF_HT  = {soft:"やわらかい・細い",normal:"ふつう",hard:"かたい・太い"};
+var SRSF_VOL = {less:"少なめ",normal:"ふつう",more:"多め"};
+var SRSF_TI  = {short:"朝5分以内",mid:"朝10分",long:"セット好き"};
+var SRSF_FS  = {round:"丸型",oval:"卵型",long:"面長",base:"ベース型",heart:"逆三角形"};
+var SRSF_STR = ["","ゆるめ","ほどよく","強め"];
+
+function srsfB64Decode(b){
+  b = String(b).replace(/-/g,"+").replace(/_/g,"/");
+  while (b.length % 4) b += "=";
+  return decodeURIComponent(escape(atob(b)));
+}
+
+/* 診断レシピの「場所」テキスト → マスターのゾーン群（部位/本数/角度） */
+function srsfExpandPlaces(pos){
+  pos = String(pos||"");
+  var out = [];
+  function add(zone,count,angle){
+    for (var i=0;i<out.length;i++) if(out[i].zone===zone) return;
+    out.push({zone:zone,count:count,angle:angle});
+  }
+  var has = function(k){ return pos.indexOf(k) >= 0; };
+  if (has("全体")){ add("トップ",3,90); add("バック上",3,90); add("バック下",3,90); add("右サイド",2,45); add("左サイド",2,45); }
+  if (has("トップ")||has("頭頂")) add("トップ",3,90);
+  if (has("表面")){ add("トップ",2,90); add("バック上",2,90); }
+  if (has("前髪")) add("前頭部",2,90);
+  if (has("顔まわり")){ add("前頭部",2,90); add("右サイド",1,45); add("左サイド",1,45); }
+  if (has("サイド")){ add("右サイド",2,45); add("左サイド",2,45); }
+  if (has("えり足")||has("襟足")) add("襟足",2,45);
+  if (has("バック")){ add("バック上",3,90); add("バック下",3,90); }
+  if (has("内側")){ add("バック下",3,90); add("襟足",2,45); }
+  if (has("中間")){ add("バック上",2,90); add("バック下",3,90); add("右サイド",2,45); add("左サイド",2,45); }
+  else if (has("毛先")){ add("バック下",3,90); add("襟足",2,45); add("右サイド",2,45); add("左サイド",2,45); }
+  if (!out.length){ add("トップ",3,90); add("バック上",3,90); }
+  return out;
+}
+
+/* QRペイロード + スタイル番号 → renderStyleResult 用プラン */
+function srsfBuildPlan(payload, idx){
+  var sel = (payload.s||[])[idx]; if(!sel) return null;
+  var rec = SRSF_RECIPES[sel.i] || {};
+  var rods = sel.r || rec.r || [];
+  var name = sel.n || rec.n || sel.i;
+  var p = payload.p || {};
+
+  var placements = [];
+  rods.forEach(function(rod){
+    var mm = rod[0], pos = rod[1]||"", wind = rod[2]||"";
+    var standUp = /立ち上げ/.test(wind) && pos.indexOf("前髪")>=0;
+    srsfExpandPlaces(pos).forEach(function(z){
+      placements.push({
+        position: z.zone,
+        smartrodName: SRSF_MM2NAME[mm] || (mm+"mm"),
+        smartrodMm: Number(mm),
+        count: z.count,
+        windingType: wind || "ヒラ巻き",
+        angle: standUp ? 110 : z.angle,
+        curlNote: "お客様レシピ「" + pos + "」"
+      });
+    });
+  });
+
+  var profBits = [];
+  if (p.g)  profBits.push(p.g==="M"?"メンズ":"レディース");
+  if (p.len)profBits.push(SRSF_LEN[p.len]||p.len);
+  if (p.fs) profBits.push("顔型:"+(SRSF_FS[p.fs]||p.fs));
+  if (p.ht) profBits.push("髪質:"+(SRSF_HT[p.ht]||p.ht));
+  if (p.vol)profBits.push("毛量:"+(SRSF_VOL[p.vol]||p.vol));
+  if (p.cu) profBits.push("希望:"+(SRSF_STR[p.cu]||p.cu));
+  if (p.ti) profBits.push(SRSF_TI[p.ti]||p.ti);
+
+  var htAdvice = p.ht==="soft"
+    ? "軟毛・細毛のためカールがゆるみやすい。弱ければワンサイズ細いロッドで再調整を。"
+    : p.ht==="hard"
+    ? "硬毛・太毛でリッジが出やすい。強すぎる場合はワンサイズ太めに。"
+    : "表示サイズを基準に、当日の髪の状態で微調整を。";
+
+  return {
+    observation: "お客様スマホ診断（SMART ROD STYLE FINDER／" + (payload.d||"") + "発行）から自動生成。" + profBits.join("／"),
+    styleName: name,
+    hairLength: (SRSF_LEN[p.len]||"") + (p.g ? "（" + (p.g==="M"?"メンズ":"レディース") + "）" : ""),
+    placements: placements,
+    fingerTechnique: rec.pro || "毛先は逃しすぎず、カール1回転を目安に。",
+    confidence: "medium",
+    advice: htAdvice + (payload.m ? " お客様メモ:「" + payload.m + "」" : "")
+  };
+}
+
+/* ─────────── ここからDOM連携（ブラウザのみ） ─────────── */
+if (typeof document !== "undefined") (function(){
+
+  function readPayload(){
+    var m = (location.hash||"").match(/srsf=([A-Za-z0-9\-_]+)/);
+    if(!m) return null;
+    try{
+      var obj = JSON.parse(srsfB64Decode(m[1]));
+      if(!obj || obj.app !== "SRSF") return null;
+      return obj;
+    }catch(e){ return null; }
+  }
+
+  function el(tag, css, html){
+    var e = document.createElement(tag);
+    if(css) e.style.cssText = css;
+    if(html!=null) e.innerHTML = html;
+    return e;
+  }
+  function escq(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+  function apply(payload, idx){
+    var plan = srsfBuildPlan(payload, idx);
+    if(!plan){ alert("スタイル情報を読み取れませんでした"); return; }
+    if (typeof renderStyleResult !== "function"){
+      alert("このバージョンには展開図機能がありません"); return;
+    }
+    renderStyleResult(plan);                       // 展開図 + SR_LAST_PLAN（巻きムービー連携）
+    var note = document.getElementById("style-note");
+    if (note){
+      var t = "QR診断:" + plan.styleName + "｜" + plan.observation.split("。")[1] + (payload.m ? "｜メモ:" + payload.m : "");
+      note.value = t.slice(0,120);
+    }
+    var tab = document.querySelector('.tab[data-tab="style"]');
+    if (tab) tab.click();
+    var bn = document.getElementById("srsf-banner");
+    if (bn) bn.remove();
+    setTimeout(function(){
+      var r = document.getElementById("style-result");
+      if (r) r.scrollIntoView({behavior:"smooth", block:"start"});
+    }, 120);
+  }
+
+  function banner(payload){
+    var old = document.getElementById("srsf-banner");
+    if (old) old.remove();
+    var p = payload.p || {};
+    var prof = [];
+    if (p.g)  prof.push(p.g==="M"?"メンズ":"レディース");
+    if (p.len)prof.push(SRSF_LEN[p.len]||"");
+    if (p.fs) prof.push("顔型:"+(SRSF_FS[p.fs]||""));
+    if (p.ht) prof.push("髪質:"+(SRSF_HT[p.ht]||""));
+    if (p.vol)prof.push("毛量:"+(SRSF_VOL[p.vol]||""));
+    if (p.cu) prof.push("希望カール:"+(SRSF_STR[p.cu]||""));
+    if (p.ti) prof.push(SRSF_TI[p.ti]||"");
+
+    var rows = (payload.s||[]).map(function(s,i){
+      var rec = SRSF_RECIPES[s.i] || {};
+      var name = s.n || rec.n || s.i;
+      var rods = (s.r || rec.r || []).map(function(r){ return r[0]+"mm"; })
+                  .filter(function(v,ix,a){ return a.indexOf(v)===ix; }).join(" / ");
+      return '<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid rgba(255,255,255,.12)">'
+        + '<div style="flex:1;min-width:0"><div style="font-weight:700;font-size:14.5px">'+ escq(name) +'</div>'
+        + '<div style="font-size:11.5px;color:#b9c6d6;margin-top:2px">'+ rods +'　強度:'+ (SRSF_STR[s.st]||s.st) +'</div></div>'
+        + '<button data-srsf-apply="'+ i +'" style="flex:0 0 auto;background:#FFB800;color:#1a1a2e;border:none;border-radius:9px;'
+        + 'padding:9px 13px;font-weight:800;font-size:12.5px;cursor:pointer">展開図に反映</button></div>';
+    }).join("");
+
+    var memo = payload.m ? '<div style="margin-top:8px;font-size:12.5px;background:rgba(255,184,0,.12);border-radius:8px;padding:8px 10px"><b style="color:#FFB800">お客様メモ：</b>'+ escq(payload.m) +'</div>' : "";
+    var ref  = payload.ref ? '<div style="margin-top:6px;font-size:11.5px;color:#f2c46b">※お客様の端末に「なりたいイメージ写真」があります。画面をご確認ください。</div>' : "";
+
+    var bn = el("div",
+      "position:fixed;top:0;left:0;right:0;z-index:99999;background:#1c2733;color:#fff;padding:13px 16px;"+
+      "font-family:'Zen Kaku Gothic New','Hiragino Sans',sans-serif;box-shadow:0 6px 22px rgba(0,0,0,.45);max-height:62vh;overflow:auto",
+      '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px">'
+      + '<div style="font-weight:800;letter-spacing:.03em;font-size:14.5px">📲 お客様の診断結果を受信しました'
+      + (payload.d ? ' <span style="font-weight:400;font-size:11.5px;color:#8fa0b3">('+ escq(payload.d) +'発行)</span>' : '') + '</div>'
+      + '<button id="srsf-x" style="background:#33465c;color:#fff;border:none;border-radius:8px;padding:6px 11px;cursor:pointer;font-size:12px">閉じる</button></div>'
+      + '<div style="font-size:12px;color:#b9c6d6;margin-top:5px">'+ prof.join("　") +'</div>'
+      + rows + memo + ref
+      + '<div style="margin-top:8px;font-size:11px;color:#8fa0b3">「展開図に反映」→ スタイル分析タブに展開図を表示。巻きムービーのタブでもこのプランを再生できます。</div>'
+    );
+    bn.id = "srsf-banner";
+    document.body.appendChild(bn);
+    document.getElementById("srsf-x").onclick = function(){ bn.remove(); };
+    bn.querySelectorAll("[data-srsf-apply]").forEach(function(b){
+      b.onclick = function(){ apply(payload, Number(b.getAttribute("data-srsf-apply"))); };
+    });
+  }
+
+  function boot(){
+    var p = readPayload();
+    if (p) banner(p);
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
+  else boot();
+  window.addEventListener("hashchange", function(){
+    var p = readPayload();
+    if (p) banner(p);
+  });
+  window.SRSF = { read:readPayload, apply:apply, buildPlan:srsfBuildPlan };
+})();
+
+</script>
+<!-- ═══ STYLE FINDER 受信 ここまで ═══ -->
+<script>setLang(LANG, true);</script>
+</body>
+</html>

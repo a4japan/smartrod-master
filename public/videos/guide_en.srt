@@ -1,0 +1,27 @@
+1
+00:00:03,574 --> 00:00:18,267
+Choose your language (日本語 · English · 繁體 · 简体)
+
+2
+00:00:18,267 --> 00:00:22,136
+1. Upload a photo of the style
+
+3
+00:00:22,136 --> 00:00:29,478
+2. Pick details (optional)
+
+4
+00:00:29,478 --> 00:00:36,605
+3. Press “Generate layout map”
+
+5
+00:00:36,605 --> 00:00:44,865
+4. See rod size, quantity and winding for each zone
+
+6
+00:00:44,865 --> 00:00:53,523
+5. Watch the winding steps as an animation
+
+7
+00:00:53,523 --> 00:01:01,306
+6. Also: size guide, Ask AI and tutorial videos

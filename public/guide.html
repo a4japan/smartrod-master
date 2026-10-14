@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SMART ROD Simulator — Guide</title>
+<meta name="description" content="How to use the free SMART ROD rod layout simulator — 日本語 / English / 繁體中文 / 简体中文">
+<meta property="og:title" content="SMART ROD Simulator — Guide">
+<meta property="og:description" content="Free rod layout from a style photo. Video guide in 4 languages.">
+<style>
+:root{--ink:#1a1a2e;--soft:#5a5a6e;--line:#e8e8f0;--bg:#fafafc;--card:#fff;--brand:#252525;--gold:#FFB800}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic","PingFang TC","Microsoft JhengHei","PingFang SC","Microsoft YaHei","Segoe UI",sans-serif;background:var(--bg);color:var(--ink);line-height:1.7}
+.wrap{max-width:860px;margin:0 auto;padding:0 20px 64px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 0;border-bottom:2px solid var(--brand);margin-bottom:22px;flex-wrap:wrap}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:18px}
+.mark{width:34px;height:34px;background:var(--brand);color:var(--gold);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900}
+h1{font-size:24px;letter-spacing:-.02em;margin-bottom:6px}
+.lead{color:var(--soft);font-size:14px;margin-bottom:18px}
+video{width:100%;aspect-ratio:16/9;background:#000;border-radius:12px;display:block}
+.langs{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 6px}
+.langs button{flex:1;min-width:110px;border:1px solid var(--line);background:var(--card);color:var(--soft);padding:11px 12px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
+.langs button.on{background:var(--brand);color:var(--gold);border-color:var(--brand)}
+.note{font-size:12px;color:var(--soft);margin-bottom:22px}
+.cta{display:block;text-align:center;background:var(--gold);color:var(--brand);font-weight:800;font-size:16px;padding:15px;border-radius:12px;text-decoration:none;margin:6px 0 26px}
+h2{font-size:16px;margin:0 0 10px}
+ol{padding-left:22px;margin-bottom:26px}li{margin-bottom:6px;font-size:14.5px}
+.foot{font-size:12.5px;color:var(--soft);border-top:1px solid var(--line);padding-top:16px}
+.foot a{color:var(--brand);font-weight:700}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><div class="logo"><span class="mark">SR</span>SMART ROD</div></div>
+  <h1 id="t-title"></h1>
+  <p class="lead" id="t-lead"></p>
+  <video id="v" controls playsinline preload="metadata" poster="videos/guide_ja.jpg"></video>
+  <div class="langs" id="langs">
+    <button type="button" data-lang="ja">日本語</button>
+    <button type="button" data-lang="en">English</button>
+    <button type="button" data-lang="zh-TW">繁體中文</button>
+    <button type="button" data-lang="zh-CN">简体中文</button>
+  </div>
+  <p class="note" id="t-note"></p>
+  <a class="cta" id="cta" href="index.html"></a>
+  <h2 id="t-steps-h"></h2>
+  <ol id="steps"></ol>
+  <div class="foot"><span id="t-contact"></span> <a href="https://smartrod.base.shop/" target="_blank" rel="noopener">smartrod.base.shop</a> ／ <a href="mailto:info@a4tokyo.com">info@a4tokyo.com</a></div>
+</div>
+<script>
+const T = {
+ "ja": {title:"SMART ROD シミュレーター 使い方", lead:"スタイル写真をアップするだけで、ロッドの太さ・本数・巻き方の展開図を無料で作れます。", note:"動画の下のボタンで言語を切り替えられます。", cta:"シミュレーターを使ってみる（無料）", stepsH:"使い方", contact:"ご購入・お問い合わせ：",
+   steps:["「スタイル→展開図」タブで、完成スタイルの写真をアップロード","性別・長さ・髪の状態などを選ぶ（任意）","「展開図を生成」を押す","部位ごとのロッドの太さ・本数・巻き方を確認","「巻きムービーで再生」で巻き工程をアニメーション確認","サイズ早見表・AIへの質問・解説動画も活用"]},
+ "en": {title:"SMART ROD Simulator — How to use", lead:"Upload a style photo and get a free layout map with rod sizes, quantities and winding methods.", note:"Use the buttons under the video to switch language.", cta:"Try the simulator (free)", stepsH:"How to use", contact:"Orders & inquiries:",
+   steps:["In the “Style → Layout” tab, upload a photo of the finished style","Pick gender, length, hair condition, etc. (optional)","Press “Generate layout map”","Check the rod size, quantity and winding for each zone","Press “Play in animation” to watch the winding steps","Also use the size guide, Ask AI and tutorial videos"]},
+ "zh-TW": {title:"SMART ROD 模擬器 使用方式", lead:"只要上傳造型照片，就能免費產生包含髮捲粗細、數量與捲法的展開圖。", note:"可用影片下方的按鈕切換語言。", cta:"試用模擬器（免費）", stepsH:"使用方式", contact:"購買・洽詢：",
+   steps:["在「造型→展開圖」分頁上傳完成造型的照片","選擇性別、長度、髮況等條件（選填）","按下「產生展開圖」","確認各部位的髮捲粗細、數量與捲法","按「以捲法動畫播放」確認捲繞流程","也可使用尺寸速查表、詢問 AI 與教學影片"]},
+ "zh-CN": {title:"SMART ROD 模拟器 使用方法", lead:"只要上传造型照片，就能免费生成包含卷发杠粗细、数量与卷法的展开图。", note:"可用视频下方的按钮切换语言。", cta:"试用模拟器（免费）", stepsH:"使用方法", contact:"购买・咨询：",
+   steps:["在“造型→展开图”标签页上传完成造型的照片","选择性别、长度、发质状况等条件（选填）","点击“生成展开图”","确认各部位的卷发杠粗细、数量与卷法","点击“以卷法动画播放”确认卷绕流程","也可使用尺寸速查表、询问 AI 与教学视频"]}
+};
+const CODES = ["ja","en","zh-TW","zh-CN"];
+function detect(){
+  try{const q=new URLSearchParams(location.search).get("lang"); if(q&&CODES.includes(q)) return q;}catch(e){}
+  try{const s=localStorage.getItem("sr_lang"); if(s&&CODES.includes(s)) return s;}catch(e){}
+  const n=String(navigator.language||"en").toLowerCase();
+  if(n.startsWith("ja")) return "ja";
+  if(n.startsWith("zh")) return /tw|hk|mo|hant/.test(n)?"zh-TW":"zh-CN";
+  return "en";
+}
+const v=document.getElementById("v");
+function setLang(l,init){
+  const d=T[l], wasPlaying=!v.paused, t=v.currentTime||0;
+  document.documentElement.lang={"ja":"ja","en":"en","zh-TW":"zh-Hant","zh-CN":"zh-Hans"}[l];
+  document.title=d.title;
+  document.getElementById("t-title").textContent=d.title;
+  document.getElementById("t-lead").textContent=d.lead;
+  document.getElementById("t-note").textContent=d.note;
+  const cta=document.getElementById("cta"); cta.textContent=d.cta; cta.href="index.html?lang="+l;
+  document.getElementById("t-steps-h").textContent=d.stepsH;
+  document.getElementById("steps").innerHTML=d.steps.map(s=>"<li></li>").join("");
+  document.querySelectorAll("#steps li").forEach((li,i)=>li.textContent=d.steps[i]);
+  document.getElementById("t-contact").textContent=d.contact;
+  document.querySelectorAll("#langs button").forEach(b=>b.classList.toggle("on",b.dataset.lang===l));
+  v.poster="videos/guide_"+l+".jpg";
+  v.src="videos/guide_"+l+".mp4";
+  if(!init){ v.addEventListener("loadedmetadata",function f(){v.currentTime=Math.min(t,v.duration||t); if(wasPlaying) v.play().catch(()=>{}); v.removeEventListener("loadedmetadata",f);}); }
+  try{localStorage.setItem("sr_lang",l);}catch(e){}
+  if(!init){try{const u=new URL(location.href);u.searchParams.set("lang",l);history.replaceState(null,"",u);}catch(e){}}
+}
+document.getElementById("langs").addEventListener("click",e=>{const b=e.target.closest("button");if(b)setLang(b.dataset.lang);});
+setLang(detect(),true);
+</script>
+</body>
+</html>
