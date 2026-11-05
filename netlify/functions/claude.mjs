@@ -69,6 +69,20 @@ async function setCount(key, c) {
   mem.set(key, c);
 }
 
+// ── アクセスコード（取引先・購入者向け）─────────────
+// コードごとに「写真解析の合計回数」を管理する。発行・回数の追加は /admin.html から。
+// 保存先: Netlify Blobs の "sr-codes" ストア（キー = コード）
+let _codes;
+async function codeStore() {
+  if (_codes !== undefined) return _codes;
+  try {
+    const m = await import("@netlify/blobs");
+    _codes = m.getStore({ name: "sr-codes", consistency: "strong" });
+  } catch (_) { _codes = null; }
+  return _codes;
+}
+const normCode = (c) => String(c || "").trim().toUpperCase().replace(/[^A-Z0-9-]/g, "").slice(0, 40);
+
 function clientIp(req, context) {
   return (context && context.ip) || req.headers.get("x-nf-client-connection-ip") ||
     (req.headers.get("x-forwarded-for") || "").split(",")[0].trim() || "unknown";
@@ -145,6 +159,33 @@ export default async (req, context) => {
 
   // 利用回数チェック
   const bucket = task === "analyze" ? "photo" : "text";
+
+  // アクセスコードがある場合（写真解析はコードの合計回数で管理し、IP・全体の1日上限は使わない）
+  const code = body.code == null ? "" : normCode(body.code);
+  let codeRec = null, cs = null;
+  if (code) {
+    cs = await codeStore();
+    if (!cs) return json({ error: "upstream" }, 502);
+    try { codeRec = await cs.get(code, { type: "json" }); } catch (_) { codeRec = null; }
+    if (!codeRec || codeRec.active === false) return json({ error: "code_invalid" }, 403);
+  } else if (bucket === "photo" && env("SR_REQUIRE_CODE") === "1") {
+    return json({ error: "code_required" }, 403);
+  }
+
+  if (codeRec && bucket === "photo") {
+    const used = codeRec.used || 0, limit = codeRec.limit || 0;
+    if (used >= limit) return json({ error: "code_used_up", remaining: { photo: 0, code: true } }, 429);
+    const now = new Date().toISOString();
+    await cs.setJSON(code, Object.assign({}, codeRec, { used: used + 1, lastUsed: now }));
+    const refundCode = async () => {
+      try {
+        const cur = (await cs.get(code, { type: "json" })) || codeRec;
+        await cs.setJSON(code, Object.assign({}, cur, { used: Math.max(0, (cur.used || 1) - 1) }));
+      } catch (_) {}
+    };
+    return await callAnthropic(key, task, lang, bucket, built, refundCode, { photo: Math.max(0, limit - (used + 1)), code: true });
+  }
+
   const limitIp = bucket === "photo" ? num("SR_LIMIT_PHOTO", 3) : num("SR_LIMIT_TEXT", 20);
   const limitAll = bucket === "photo" ? num("SR_GLOBAL_PHOTO", 40) : num("SR_GLOBAL_TEXT", 300);
   const day = jstDay();
@@ -157,7 +198,11 @@ export default async (req, context) => {
   if (cIp >= limitIp) return json({ error: bucket === "photo" ? "rate_photo" : "rate_text" }, 429);
   await Promise.all([setCount(kAll, cAll + 1), setCount(kIp, cIp + 1)]);
   const refund = () => Promise.all([setCount(kAll, cAll), setCount(kIp, cIp)]).catch(() => {});
+  return await callAnthropic(key, task, lang, bucket, built, refund, { [bucket]: Math.max(0, limitIp - (cIp + 1)) });
+};
 
+// ── Anthropic 呼び出し（失敗時は refund で回数を戻す）──────────
+async function callAnthropic(key, task, lang, bucket, built, refund, remaining) {
   const systemText = KB + "\n" + SYS[task] + "\n\n" + LANG_DIRECTIVE[lang] + GUARD;
   const payload = {
     model: bucket === "photo" ? MODEL_PHOTO() : MODEL_TEXT(),
@@ -185,7 +230,7 @@ export default async (req, context) => {
     const data = await r.json();
     const text = (data.content || []).filter((b) => b.type === "text").map((b) => b.text).join("\n").trim();
     if (!text) { await refund(); return json({ error: "upstream" }, 502); }
-    return json({ text, remaining: { [bucket]: Math.max(0, limitIp - (cIp + 1)) } });
+    return json({ text, remaining });
   } catch (e) {
     await refund();
     if (e && e.name === "AbortError") return json({ error: "timeout" }, 504);
@@ -194,4 +239,4 @@ export default async (req, context) => {
   } finally {
     clearTimeout(timer);
   }
-};
+}

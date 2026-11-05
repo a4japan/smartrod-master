@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>SMART ROD Master アクセスコード管理</title>
+<style>
+  :root { --bg:#f6f5f2; --card:#fff; --ink:#1f1f1f; --mute:#6b6b6b; --line:#e3e0d8; --acc:#1f6f5c; --warn:#a3501b; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font-family:-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif; font-size:14px; }
+  .wrap { max-width:980px; margin:0 auto; padding:24px 16px 60px; }
+  h1 { font-size:20px; margin:0 0 4px; }
+  .sub { color:var(--mute); margin:0 0 20px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px; margin-bottom:16px; }
+  h2 { font-size:15px; margin:0 0 12px; }
+  label { display:block; font-size:12px; color:var(--mute); margin-bottom:4px; }
+  input { width:100%; padding:9px 10px; border:1px solid var(--line); border-radius:8px; font:inherit; }
+  .row { display:grid; grid-template-columns:2fr 1fr 2fr auto; gap:10px; align-items:end; }
+  @media (max-width:700px) { .row { grid-template-columns:1fr; } }
+  button { padding:9px 14px; border-radius:8px; border:1px solid var(--acc); background:var(--acc); color:#fff; font:inherit; font-weight:600; cursor:pointer; white-space:nowrap; }
+  button.ghost { background:#fff; color:var(--acc); }
+  button.small { padding:5px 9px; font-size:12px; font-weight:500; }
+  button.danger { border-color:var(--warn); color:var(--warn); background:#fff; }
+  .tablewrap { overflow-x:auto; }
+  table { width:100%; border-collapse:collapse; min-width:720px; }
+  th, td { text-align:left; padding:9px 8px; border-bottom:1px solid var(--line); vertical-align:middle; }
+  th { font-size:12px; color:var(--mute); font-weight:600; }
+  code { font-family:ui-monospace,Menlo,monospace; font-size:13px; background:#f1efe9; padding:2px 6px; border-radius:5px; }
+  .off { color:var(--mute); }
+  .badge { font-size:11px; padding:2px 7px; border-radius:10px; background:#e5f3ee; color:var(--acc); }
+  .badge.stop { background:#f6e9e0; color:var(--warn); }
+  .actions { display:flex; gap:6px; flex-wrap:wrap; }
+  #msg { min-height:20px; margin:8px 0 0; color:var(--acc); }
+  #msg.err { color:var(--warn); }
+  .hide { display:none; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>SMART ROD Master アクセスコード管理</h1>
+  <p class="sub">取引先・購入者ごとにコードを発行し、写真解析の回数を管理します。</p>
+
+  <div class="card" id="login">
+    <h2>管理用パスワード</h2>
+    <div class="row" style="grid-template-columns:1fr auto">
+      <div><label for="key">Netlify に設定した SR_ADMIN_KEY</label><input id="key" type="password" autocomplete="current-password"></div>
+      <button id="btn-login">開く</button>
+    </div>
+  </div>
+
+  <div id="main" class="hide">
+    <div class="card">
+      <h2>新しいコードを発行</h2>
+      <div class="row">
+        <div><label for="f-name">取引先名（必須）</label><input id="f-name" placeholder="例：〇〇サロン 田中様"></div>
+        <div><label for="f-limit">写真解析の回数</label><input id="f-limit" type="number" min="1" value="20"></div>
+        <div><label for="f-note">メモ（任意）</label><input id="f-note" placeholder="例：台湾の代理店候補"></div>
+        <button id="btn-create">発行する</button>
+      </div>
+      <p id="msg"></p>
+    </div>
+
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <h2 style="margin:0">発行済みのコード</h2>
+        <button class="ghost small" id="btn-reload">更新</button>
+      </div>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>取引先名</th><th>コード</th><th>使用 / 上限</th><th>残り</th><th>状態</th><th>最終利用</th><th>操作</th></tr></thead>
+          <tbody id="list"><tr><td colspan="7" class="off">読み込み中…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+let KEY = "";
+try { KEY = sessionStorage.getItem("sr_admin_key") || ""; } catch (e) {}
+
+const ERR = {
+  unauthorized: "パスワードが違います。",
+  admin_not_configured: "Netlify に SR_ADMIN_KEY が設定されていません。",
+  name_required: "取引先名を入れてください。",
+  code_exists: "そのコードはすでに使われています。",
+  not_found: "コードが見つかりません。",
+};
+
+async function api(payload) {
+  const r = await fetch("/api/admin", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "x-admin-key": KEY },
+    body: JSON.stringify(payload),
+  });
+  let d = null; try { d = await r.json(); } catch (e) {}
+  if (!r.ok || !d || d.error) throw new Error(ERR[d && d.error] || "エラーが発生しました（" + r.status + "）");
+  return d;
+}
+function say(t, err) { const m = $("msg"); m.textContent = t; m.className = err ? "err" : ""; }
+const esc = (s) => String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const linkFor = (code) => location.origin + "/?code=" + encodeURIComponent(code);
+function fmt(iso) {
+  if (!iso) return "—";
+  try { return new Date(iso).toLocaleString("ja-JP", { timeZone: "Asia/Tokyo", month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" }); } catch (e) { return iso; }
+}
+function inviteText(it) {
+  const link = linkFor(it.code);
+  return "SMART ROD Master（スマートロッド展開図シミュレーター）の専用リンクをお送りします。\n" +
+    link + "\n" +
+    "写真解析を " + it.limit + " 回までお使いいただけます。回数がなくなりましたら、お気軽にご連絡ください。\n\n" +
+    "Here is your private link to SMART ROD Master (rod layout simulator):\n" +
+    link + "\n" +
+    "You can use photo analysis up to " + it.limit + " times. If you run out, please just let us know.";
+}
+async function copy(t) {
+  try { await navigator.clipboard.writeText(t); say("コピーしました。"); }
+  catch (e) { say("コピーできませんでした。手動で選択してください：" + t, true); }
+}
+
+let ITEMS = [];
+async function load() {
+  const d = await api({ action: "list" });
+  ITEMS = d.items || [];
+  const tb = $("list");
+  if (!ITEMS.length) { tb.innerHTML = '<tr><td colspan="7" class="off">まだコードはありません。</td></tr>'; return; }
+  tb.innerHTML = ITEMS.map((it, i) => {
+    const left = Math.max(0, (it.limit || 0) - (it.used || 0));
+    const on = it.active !== false;
+    return '<tr class="' + (on ? "" : "off") + '">' +
+      "<td>" + esc(it.name) + (it.note ? '<br><small class="off">' + esc(it.note) + "</small>" : "") + "</td>" +
+      "<td><code>" + esc(it.code) + "</code></td>" +
+      "<td>" + (it.used || 0) + " / " + (it.limit || 0) + "</td>" +
+      "<td>" + left + "</td>" +
+      "<td>" + (on ? '<span class="badge">有効</span>' : '<span class="badge stop">停止中</span>') + "</td>" +
+      "<td>" + fmt(it.lastUsed) + "</td>" +
+      '<td><div class="actions">' +
+        '<button class="ghost small" data-act="link" data-i="' + i + '">リンクをコピー</button>' +
+        '<button class="ghost small" data-act="invite" data-i="' + i + '">案内文をコピー</button>' +
+        '<button class="ghost small" data-act="add" data-i="' + i + '">＋10回</button>' +
+        '<button class="small ' + (on ? "danger" : "ghost") + '" data-act="toggle" data-i="' + i + '">' + (on ? "停止" : "再開") + "</button>" +
+      "</div></td></tr>";
+  }).join("");
+}
+
+$("list").addEventListener("click", async (e) => {
+  const b = e.target.closest("button[data-act]"); if (!b) return;
+  const it = ITEMS[+b.dataset.i]; if (!it) return;
+  try {
+    if (b.dataset.act === "link") return copy(linkFor(it.code));
+    if (b.dataset.act === "invite") return copy(inviteText(it));
+    if (b.dataset.act === "add") { await api({ action: "update", code: it.code, addUses: 10 }); say(it.name + " に10回追加しました。"); }
+    if (b.dataset.act === "toggle") { await api({ action: "update", code: it.code, active: it.active === false }); say(it.name + (it.active === false ? " を再開しました。" : " を停止しました。")); }
+    await load();
+  } catch (err) { say(err.message, true); }
+});
+
+$("btn-create").onclick = async () => {
+  const name = $("f-name").value.trim();
+  if (!name) return say("取引先名を入れてください。", true);
+  try {
+    const d = await api({ action: "create", name, limit: +$("f-limit").value || 20, note: $("f-note").value });
+    $("f-name").value = ""; $("f-note").value = "";
+    await load();
+    await copy(inviteText(d.item));
+    say("発行しました：" + d.item.code + "（案内文をコピーしました）");
+  } catch (err) { say(err.message, true); }
+};
+$("btn-reload").onclick = () => load().catch((err) => say(err.message, true));
+
+async function login() {
+  KEY = $("key").value.trim() || KEY;
+  try {
+    await load();
+    try { sessionStorage.setItem("sr_admin_key", KEY); } catch (e) {}
+    $("login").classList.add("hide"); $("main").classList.remove("hide");
+  } catch (err) { alert(err.message); }
+}
+$("btn-login").onclick = login;
+$("key").addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.isComposing) login(); });
+if (KEY) { $("key").value = KEY; login(); }
+</script>
+</body>
+</html>
