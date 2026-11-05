@@ -130,7 +130,7 @@ async function load() {
     const left = Math.max(0, (it.limit || 0) - (it.used || 0));
     const on = it.active !== false;
     return '<tr class="' + (on ? "" : "off") + '">' +
-      "<td>" + esc(it.name) + (it.note ? '<br><small class="off">' + esc(it.note) + "</small>" : "") + "</td>" +
+      '<td data-namecell="' + i + '">' + esc(it.name) + (it.note ? '<br><small class="off">' + esc(it.note) + "</small>" : "") + "</td>" +
       "<td><code>" + esc(it.code) + "</code></td>" +
       "<td>" + (it.used || 0) + " / " + (it.limit || 0) + "</td>" +
       "<td>" + left + "</td>" +
@@ -139,6 +139,7 @@ async function load() {
       '<td><div class="actions">' +
         '<button class="ghost small" data-act="link" data-i="' + i + '">リンクをコピー</button>' +
         '<button class="ghost small" data-act="invite" data-i="' + i + '">案内文をコピー</button>' +
+        '<button class="ghost small" data-act="rename" data-i="' + i + '">名前を変更</button>' +
         '<button class="ghost small" data-act="add" data-i="' + i + '">＋10回</button>' +
         '<button class="small ' + (on ? "danger" : "ghost") + '" data-act="toggle" data-i="' + i + '">' + (on ? "停止" : "再開") + "</button>" +
       "</div></td></tr>";
@@ -151,6 +152,24 @@ $("list").addEventListener("click", async (e) => {
   try {
     if (b.dataset.act === "link") return copy(linkFor(it.code));
     if (b.dataset.act === "invite") return copy(inviteText(it));
+    if (b.dataset.act === "rename") {
+      const td = document.querySelector('[data-namecell="' + b.dataset.i + '"]');
+      td.innerHTML =
+        '<input class="rn-name" value="' + esc(it.name) + '" placeholder="取引先名" style="margin-bottom:4px">' +
+        '<input class="rn-note" value="' + esc(it.note || "") + '" placeholder="メモ（任意）" style="margin-bottom:6px">' +
+        '<div class="actions"><button class="small" data-act="rename-save" data-i="' + b.dataset.i + '">保存</button>' +
+        '<button class="ghost small" data-act="rename-cancel" data-i="' + b.dataset.i + '">やめる</button></div>';
+      td.querySelector(".rn-name").focus();
+      return;
+    }
+    if (b.dataset.act === "rename-cancel") return load();
+    if (b.dataset.act === "rename-save") {
+      const td = document.querySelector('[data-namecell="' + b.dataset.i + '"]');
+      const name = td.querySelector(".rn-name").value.trim();
+      if (!name) return say("取引先名を入れてください。", true);
+      await api({ action: "update", code: it.code, name, note: td.querySelector(".rn-note").value });
+      say("名前を変更しました：" + name);
+    }
     if (b.dataset.act === "add") { await api({ action: "update", code: it.code, addUses: 10 }); say(it.name + " に10回追加しました。"); }
     if (b.dataset.act === "toggle") { await api({ action: "update", code: it.code, active: it.active === false }); say(it.name + (it.active === false ? " を再開しました。" : " を停止しました。")); }
     await load();
